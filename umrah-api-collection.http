@@ -1,0 +1,134 @@
+### تسجيل دخول مدير
+POST http://192.168.100.23 :3000/api/admin/login-admin
+Content-Type: application/json
+
+{
+  "email": "admin@email.com",
+  "password": "yourPassword"
+}
+
+### إضافة مدير عام جديد
+POST http://192.168.100.23 :3000/api/admin/add-admin
+Content-Type: application/json
+Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd2J5ZmgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3pyd3R4dnliZHhwaHlsc3Zqb3BpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI0Zjc1OTgzYS1lMjI4LTRjZjMtYjc4Yi0yMTAxYmUwZmYzMGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzUxMjMzOTgxLCJpYXQiOjE3NTEyMzAzODEsImVtYWlsIjoibWFpbmFkbWluQGVtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzUxMjMwMzgxfV0sInNlc3Npb25faWQiOiI4ZGVkNDhhYi0xNzdmLTQxOGItOWJmYS0xNzQ1NTQ5OWJiNGMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.CHWRbHF1MinsM2ezWSx0JR6lCoW3vbs94f613v_ikqc
+
+{
+  "email": "admin@email.com",
+  "password": "yourPassword",
+  "full_name": "اسم المدير"
+}
+
+### جلب جميع المدراء
+GET http://192.168.100.23 :3000/api/admin/all
+Authorization: Bearer {{access_token}}
+
+### إضافة مدير فرعي جديد
+POST http://192.168.100.23 :3000/api/admin/add-sub-admin
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "email": "subadmin@email.com",
+  "password": "yourPassword",
+  "full_name": "مدير فرعي",
+  "role": "sub",
+  "permissions": { "can_approve_agencies": true, "manage_agencies": true, "manage_offers": true },
+  "created_by": "معرف_المدير_العام"
+}
+
+### تعديل بيانات مدير فرعي
+PUT http://192.168.100.23 :3000/api/admin/update/1
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "full_name": "اسم جديد",
+  "permissions": { "can_approve_agencies": false, "manage_agencies": true, "manage_offers": false }
+}
+
+### حذف مدير فرعي
+DELETE http://192.168.100.23 :3000/api/admin/delete/1
+Authorization: Bearer {{access_token}}
+
+### إضافة وكالة جديدة
+POST http://192.168.100.23 :3000/api/agencies/add
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "email": "agency@email.com",
+  "password": "yourPassword",
+  "name": "اسم الوكالة",
+  "wilaya": "الولاية",
+  "license_number": "12345",
+  "phone": "0555555555",
+  "bank_account": "رقم الحساب",
+  "logo_url": "رابط الشعار",
+  "background_url": "رابط الخلفية",
+  "location_name": "العنوان النصي",
+  "latitude": 36.123,
+  "longitude": 3.456
+}
+
+### جلب جميع الوكالات
+GET http://192.168.100.23 :3000/api/agencies/all
+Authorization: Bearer {{access_token}}
+
+### جلب الوكالات المعلقة فقط
+GET http://192.168.100.23 :3000/api/agencies/pending
+Authorization: Bearer {{access_token}}
+
+### قبول أو تعليق وكالة
+PUT http://192.168.100.23 :3000/api/agencies/status/1
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "is_approved": true
+}
+
+
+### إضافة عرض جديد
+POST http://192.168.100.23 :3000/api/offers/add
+Content-Type: application/json
+Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd2J5ZmgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3pyd3R4dnliZHhwaHlsc3Zqb3BpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI0Zjc1OTgzYS1lMjI4LTRjZjMtYjc4Yi0yMTAxYmUwZmYzMGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzUxMjMzOTgxLCJpYXQiOjE3NTEyMzAzODEsImVtYWlsIjoibWFpbmFkbWluQGVtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzUxMjMwMzgxfV0sInNlc3Npb25faWQiOiI4ZGVkNDhhYi0xNzdmLTQxOGItOWJmYS0xNzQ1NTQ5OWJiNGMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.CHWRbHF1MinsM2ezWSx0JR6lCoW3vbs94f613v_ikqc
+
+{
+  "agency_id": "<معرف الوكالة>",
+  "title": "عرض عمرة رمضان",
+  "main_image": "https://example.com/image.jpg",
+  "services": { "visa": true, "transport": true, "meals": true },
+  "airline_id": 1,
+  "flight_type": "مباشرة",
+  "departure_date": "2025-03-15",
+  "return_date": "2025-03-30",
+  "duration_days": 15,
+  "hotel_name": "فندق مكة",
+  "hotel_distance": 500,
+  "hotel_images": ["https://example.com/hotel1.jpg", "https://example.com/hotel2.jpg"],
+  "description": "برنامج عمرة شامل الإقامة والنقل",
+  "entry_exit": "جدة",
+  "price_double": 15000,
+  "price_triple": 14000,
+  "price_quad": 13000,
+  "price_quint": 12000
+}
+
+### جلب جميع العروض
+GET http://192.168.100.23 :3000/api/offers/all
+Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd2J5ZmgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3pyd3R4dnliZHhwaHlsc3Zqb3BpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI0Zjc1OTgzYS1lMjI4LTRjZjMtYjc4Yi0yMTAxYmUwZmYzMGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzUxMjMzOTgxLCJpYXQiOjE3NTEyMzAzODEsImVtYWlsIjoibWFpbmFkbWluQGVtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzUxMjMwMzgxfV0sInNlc3Npb25faWQiOiI4ZGVkNDhhYi0xNzdmLTQxOGItOWJmYS0xNzQ1NTQ5OWJiNGMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.CHWRbHF1MinsM2ezWSx0JR6lCoW3vbs94f613v_ikqc
+
+### تعديل عرض
+PUT http://192.168.100.23 :3000/api/offers/update/1
+Content-Type: application/json
+Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd2J5ZmgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3pyd3R4dnliZHhwaHlsc3Zqb3BpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI0Zjc1OTgzYS1lMjI4LTRjZjMtYjc4Yi0yMTAxYmUwZmYzMGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzUxMjMzOTgxLCJpYXQiOjE3NTEyMzAzODEsImVtYWlsIjoibWFpbmFkbWluQGVtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzUxMjMwMzgxfV0sInNlc3Npb25faWQiOiI4ZGVkNDhhYi0xNzdmLTQxOGItOWJmYS0xNzQ1NTQ5OWJiNGMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.CHWRbHF1MinsM2ezWSx0JR6lCoW3vbs94f613v_ikqc
+
+{
+  "title": "عنوان جديد",
+  "price_double": 10000
+}
+
+### حذف عرض
+DELETE http://192.168.100.23 :3000/api/offers/delete/1
+Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd2J5ZmgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3pyd3R4dnliZHhwaHlsc3Zqb3BpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI0Zjc1OTgzYS1lMjI4LTRjZjMtYjc4Yi0yMTAxYmUwZmYzMGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzUxMjMzOTgxLCJpYXQiOjE3NTEyMzAzODEsImVtYWlsIjoibWFpbmFkbWluQGVtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzUxMjMwMzgxfV0sInNlc3Npb25faWQiOiI4ZGVkNDhhYi0xNzdmLTQxOGItOWJmYS0xNzQ1NTQ5OWJiNGMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.CHWRbHF1MinsM2ezWSx0JR6lCoW3vbs94f613v_ikqc
+

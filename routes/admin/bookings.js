@@ -1,0 +1,213 @@
+const express = require('express');
+const router = express.Router();
+const supabase = require('../../supabaseClient');
+// --- رفع صورة الجواز عبر Cloudinary ---
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+  cloud_name: 'dbwsguzvt',
+  api_key: '872325744724379',
+  api_secret: 'Fgy866yvuuargXrgfn7idGFEHlw'
+});
+
+// رفع صورة الجواز (يتطلب توكن مدير)
+router.post('/upload/passport', upload.single('passport'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'يرجى إرسال ملف الصورة في الحقل passport' });
+    }
+    // رفع الصورة إلى Cloudinary مباشرة من buffer
+    const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    let result;
+    try {
+      result = await cloudinary.uploader.upload(base64, { folder: 'bookings/passports' });
+    } catch (uploadErr) {
+      console.error('Cloudinary upload error:', uploadErr);
+      return res.status(500).json({ error: 'فشل رفع الصورة إلى Cloudinary', details: uploadErr.message });
+    }
+    if (!result || !result.secure_url) {
+      console.error('Cloudinary returned no url:', result);
+      return res.status(500).json({ error: 'فشل رفع الصورة إلى Cloudinary', details: 'No secure_url returned' });
+    }
+    return res.json({ url: result.secure_url });
+  } catch (err) {
+    res.status(500).json({ error: 'خطأ غير متوقع أثناء رفع الصورة', details: err.message });
+  }
+});
+
+// حماية جميع العمليات في هذا الملف
+async function verifyToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'يرجى إرسال التوكن في الهيدر (Authorization: Bearer <token>)' });
+  }
+  const token = authHeader.split(' ')[1];
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data || !data.user) {
+    return res.status(401).json({ error: 'توكن غير صالح أو منتهي الصلاحية.' });
+  }
+  req.user = data.user;
+  next();
+}
+
+router.use(verifyToken);
+
+// إنشاء حجز جديد (status = قيد الانتظار)
+router.post('/add', async (req, res) => {
+  const fields = req.body;
+  fields.status = 'قيد الانتظار';
+  const { data, error } = await supabase.from('bookings').insert([fields]).select();
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+  res.json({ message: 'تم إرسال طلب الحجز بنجاح', data });
+});
+
+// موافقة المدير أو المدير الفرعي المسؤول عن إدارة الطلبيات (status → بانتظار موافقة الوكالة)
+router.put('/approve-by-admin/:id', async (req, res) => {
+  // تحقق من أن المستخدم مدير عام أو مدير فرعي لديه صلاحية إدارة الطلبيات (manage_bookings)
+  const { data: admin, error: adminError } = await supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
+  if (adminError || !admin) {
+    return res.status(403).json({ error: 'غير مصرح. يرجى تسجيل الدخول كمدير.' });
+  }
+  if (
+    admin.role !== 'main' &&
+    !(admin.permissions && admin.permissions.manage_bookings === true)
+  ) {
+    return res.status(403).json({ error: 'غير مصرح. فقط المدير العام أو مدير فرعي لديه صلاحية إدارة الطلبيات يمكنه الموافقة الأولية.' });
+  }
+  const { id } = req.params;
+  const { data, error } = await supabase.from('bookings').update({ status: 'بانتظار موافقة الوكالة' }).eq('id', id).select();
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+  res.json({ message: 'تمت الموافقة من طرف الإدارة. بانتظار موافقة الوكالة.', data });
+});
+
+// موافقة الوكالة (status → مقبول)
+router.put('/approve-by-agency/:id', async (req, res) => {
+  // تحقق من أن المستخدم ينتمي للوكالة المرتبطة بالحجز
+  const { id } = req.params;
+  // جلب الحجز
+  const { data: booking, error: bookingError } = await supabase.from('bookings').select('offer_id, status').eq('id', id).single();
+  if (bookingError || !booking) {
+    return res.status(404).json({ error: 'الحجز غير موجود.' });
+  }
+  // جلب العرض لمعرفة الوكالة المالكة
+  const { data: offer, error: offerError } = await supabase.from('offers').select('agency_id').eq('id', booking.offer_id).single();
+  if (offerError || !offer) {
+    return res.status(404).json({ error: 'العرض غير موجود.' });
+  }
+  // تحقق أن المستخدم ينتمي للوكالة
+  const { data: agency, error: agencyError } = await supabase.from('agencies').select('id').eq('id', req.user.id).single();
+  if (agencyError || !agency || agency.id !== offer.agency_id) {
+    return res.status(403).json({ error: 'غير مصرح. فقط الوكالة المالكة يمكنها الموافقة النهائية.' });
+  }
+  // يجب أن يكون status الحالي "بانتظار موافقة الوكالة"
+  if (booking.status !== 'بانتظار موافقة الوكالة') {
+    return res.status(400).json({ error: 'لا يمكن الموافقة إلا بعد موافقة المدير.' });
+  }
+  const { data, error } = await supabase.from('bookings').update({ status: 'مقبول' }).eq('id', id).select();
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+  // هنا يمكنك إرسال بيانات المعتمر للوكالة (مثلاً عبر إشعار أو بريد)
+  res.json({ message: 'تمت الموافقة النهائية من الوكالة. تم إرسال بيانات المعتمر.', data });
+});
+
+// رفض الحجز (من المدير أو الوكالة) مع حذف الطلب نهائياً
+router.put('/reject/:id', async (req, res) => {
+  const { id } = req.params;
+  // يمكن للمدير العام أو الوكالة المالكة فقط الرفض
+  const { data: booking, error: bookingError } = await supabase.from('bookings').select('offer_id').eq('id', id).single();
+  if (bookingError || !booking) {
+    return res.status(404).json({ error: 'الحجز غير موجود.' });
+  }
+  // جلب العرض لمعرفة الوكالة المالكة
+  const { data: offer, error: offerError } = await supabase.from('offers').select('agency_id').eq('id', booking.offer_id).single();
+  if (offerError || !offer) {
+    return res.status(404).json({ error: 'العرض غير موجود.' });
+  }
+  // تحقق من صلاحية المستخدم
+  let isAllowed = false;
+  // مدير عام
+  const { data: admin, error: adminError } = await supabase.from('admins').select('role').eq('id', req.user.id).single();
+  if (!adminError && admin && admin.role === 'main') isAllowed = true;
+  // وكالة مالكة
+  const { data: agency, error: agencyError } = await supabase.from('agencies').select('id').eq('id', req.user.id).single();
+  if (!agencyError && agency && agency.id === offer.agency_id) isAllowed = true;
+  if (!isAllowed) {
+    return res.status(403).json({ error: 'غير مصرح. فقط المدير العام أو الوكالة المالكة يمكنهم الرفض.' });
+  }
+  // حذف الحجز نهائياً
+  const { error } = await supabase.from('bookings').delete().eq('id', id);
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+  res.json({ message: 'تم رفض الحجز وحذفه نهائياً.' });
+});
+
+module.exports = router;
+
+
+// جلب جميع الحجوزات مع اسم العرض واسم الوكالة (يدوياً)
+router.get('/all', async (req, res) => {
+  // السماح فقط للمدير العام أو المدير الفرعي المسؤول عن إدارة الطلبيات
+  const { data: admin, error: adminError } = await supabase
+    .from('admins')
+    .select('role, permissions')
+    .eq('id', req.user.id)
+    .single();
+  if (adminError || !admin) {
+    return res.status(403).json({ error: 'غير مصرح. يرجى تسجيل الدخول كمدير.' });
+  }
+  if (
+    admin.role !== 'main' &&
+    !(admin.permissions && admin.permissions.manage_bookings === true)
+  ) {
+    return res.status(403).json({ error: 'غير مصرح. فقط المدير العام أو مدير فرعي لديه صلاحية إدارة الطلبيات يمكنه عرض قائمة الحجوزات.' });
+  }
+
+  // جلب جميع الحجوزات مع بيانات العرض
+  const { data: bookings, error } = await supabase
+    .from('bookings')
+    .select('id, full_name, phone, room_type, status, created_at, offer_id, passport_image_url, offer:offers(id, title, agency_id)')
+    .order('created_at', { ascending: false });
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  // استخراج جميع agency_id من العروض
+  const agencyIds = Array.from(new Set(
+    bookings.map(b => b.offer && b.offer.agency_id).filter(Boolean)
+  ));
+
+  // جلب أسماء الوكالات دفعة واحدة
+  let agenciesMap = {};
+  if (agencyIds.length) {
+    const { data: agencies, error: agencyError } = await supabase
+      .from('agencies')
+      .select('id, name')
+      .in('id', agencyIds);
+    if (!agencyError && agencies) {
+      agencies.forEach(a => { agenciesMap[a.id] = a.name; });
+    }
+  }
+
+  // تجهيز البيانات النهائية مع الحقول المطلوبة فقط
+  const result = bookings.map(b => ({
+    id: b.id,
+    full_name: b.full_name,
+    phone: b.phone,
+    agency_name: b.offer && b.offer.agency_id ? (agenciesMap[b.offer.agency_id] || '') : '',
+    offer_title: b.offer ? b.offer.title : '',
+    created_at: b.created_at,
+    status: b.status,
+    room_type: b.room_type,
+    passport_image_url: b.passport_image_url || '',
+    // أضف أي حقول أخرى مطلوبة للواجهة
+  }));
+  res.json({ bookings: result });
+});
