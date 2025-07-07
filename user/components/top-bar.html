@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>منصة العمرة | حجوزات العمرة المميزة</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --islamic-green: #004d40;
+      --islamic-green-light: #00695c;
+      --golden: #d4af37;
+      --golden-light: #f5e6a8;
+      --white: #ffffff;
+      --text-dark: #333333;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Tajawal', sans-serif;
+      background-color: #f9f9f9;
+      color: var(--text-dark);
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+
+    /* الشريط العلوي المثبت */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, var(--islamic-green), var(--islamic-green-light));
+      padding: 12px 15px;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1100;
+      border-bottom: 2px solid var(--golden);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* الشعار المثبت */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .logo-img {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--golden);
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      display: block;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--golden);
+      font-family: 'Amiri', serif;
+      white-space: nowrap;
+    }
+
+    /* شريط البحث المثبت */
+    .search-container {
+      flex: 1;
+      margin: 0 10px;
+      position: relative;
+      min-width: 0;
+    }
+
+    .search-bar {
+      width: 100%;
+      padding: 10px 35px 10px 12px;
+      border-radius: 20px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      color: var(--islamic-green);
+      background-color: rgba(255, 255, 255, 0.95);
+      font-family: 'Tajawal', sans-serif;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--islamic-green);
+      font-size: 14px;
+    }
+
+    /* أزرار التنقل المثبتة */
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* زر اللغة المثبت */
+    .lang-btn {
+      background: var(--golden);
+      color: var(--islamic-green);
+      border: none;
+      border-radius: 20px;
+      padding: 8px 12px;
+      font-weight: bold;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 12px;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .lang-btn i {
+      font-size: 14px;
+    }
+
+    /* زر المستخدم المثبت */
+    .user-btn {
+      background: none;
+      border: none;
+      color: var(--white);
+      font-size: 20px;
+    }
+
+   
+
+    /* التكيف مع أحجام الشاشات المختلفة */
+    @media (max-width: 480px) {
+      .logo-text {
+        font-size: 16px;
+      }
+      
+      .search-bar {
+        padding: 8px 30px 8px 10px;
+        font-size: 13px;
+      }
+      
+      .search-icon {
+        left: 10px;
+        font-size: 12px;
+      }
+      
+      .lang-btn {
+        padding: 6px 8px;
+        font-size: 11px;
+      }
+      
+      .lang-btn i {
+        font-size: 12px;
+      }
+      
+      .user-btn {
+        font-size: 18px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .logo-text {
+        display: none;
+      }
+      
+      .logo-icon {
+        font-size: 22px;
+      }
+      
+      .lang-btn span {
+        display: none;
+      }
+      
+      .lang-btn {
+        padding: 8px;
+        width: 30px;
+
+
+height: 30px;
+        border-radius: 50%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- الشريط العلوي المثبت -->
+  <div class="top-bar">
+    <div class="logo" onclick="goToHome()">
+      <img src="img/images.jpeg" alt="شعار منصة العمرة" class="logo-img" />
+      <span class="logo-text">منصة العمرة</span>
+    </div>
+
+    <div class="search-container">
+      <input type="text" class="search-bar" placeholder="ابحث..." id="searchInput">
+      <i class="fas fa-search search-icon"></i>
+    </div>
+
+    <div class="actions">
+      <button class="lang-btn" onclick="toggleLanguage()">
+        <i class="fas fa-globe"></i>
+        <span>EN</span>
+      </button>
+    
+    </div>
+  </div>
+
+ 
+  <script>
+    // الذهاب للصفحة الرئيسية
+    function goToHome() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+
+    // تبديل اللغة
+    function toggleLanguage() {
+      const langBtn = document.querySelector('.lang-btn');
+      const currentLang = langBtn.querySelector('span');
+      
+      if (currentLang.textContent === 'EN') {
+        currentLang.textContent = 'AR';
+        langBtn.style.background = 'var(--islamic-green)';
+        langBtn.style.color = 'var(--white)';
+      } else {
+        currentLang.textContent = 'EN';
+        langBtn.style.background = 'var(--golden)';
+        langBtn.style.color = 'var(--islamic-green)';
+      }
+    }
+
+  
+
+    // البحث
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        performSearch(this.value);
+      }
+    });
+
+    function performSearch(query) {
+      if (query.trim() !== '') {
+        console.log('بحث عن:', query);
+      }
+    }
+
+    // منع التكبير/التصغير بالضغط المزدوج
+    document.addEventListener('dblclick', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    // تحسين الأداء على الأجهزة المحمولة
+    document.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+  </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="منصة العمرة - عروض العمرة المميزة">
+    <meta name="theme-color" content="#004d40">
+    <title>منصة العمرة - العروض المميزة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Amiri:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/offers.css">
+</head>
+<body>
+    <!-- خلفية الصفحة -->
+    <div class="page-bg"></div>
+    <!-- الشريط العلوي -->
+   <div id="top-bar-placeholder"></div>
+    <!-- عنوان الصفحة -->
+    <header class="page-header">
+        <h1 class="page-title">العروض المميزة</h1>
+        <p class="page-subtitle">اختر من بين أفضل برامج العمرة المناسبة لك</p>
+    </header>
+    <!-- فلترة العروض -->
+    <section class="filters-section">
+        <!-- فلترة جديدة حسب المواصفات المطلوبة -->
+        <div class="filter-group">
+            <label for="agencyName" class="filter-label">اسم الوكالة</label>
+            <select id="agencyName" class="filter-select">
+                <option value="">كل الوكالات</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">ترتيب السعر</label>
+            <select id="priceOrder" class="filter-select">
+                <option value="">بدون ترتيب</option>
+                <option value="asc">من الأقل للأعلى</option>
+                <option value="desc">من الأعلى للأقل</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="airport" class="filter-label">مطار الإقلاع</label>
+            <select id="airport" class="filter-select">
+                <option value="">كل المطارات</option>
+            </select>
+        </div>
+
+        <div class="filter-group" style="align-items:flex-end;">
+            <label class="filter-label" style="opacity:0;">الأقرب للحرم</label>
+            <button type="button" id="nearestHaramBtn" class="filter-btn" style="padding:10px 18px; min-width:120px;">
+                <i class="fas fa-location-crosshairs"></i> الأقرب للحرم
+            </button>
+        </div>
+    </section>
+
+    <!-- قائمة العروض -->
+    <section class="offers-container">
+        <!-- سيتم تعبئة العروض ديناميكياً من خلال offers.js -->
+    </section>
+
+    <!-- الشريط السفلي -->
+   <div id="bottom-bar-placeholder"></div>
+    <!-- زر العودة للأعلى -->
+    <button class="scroll-top" onclick="scrollToTop()">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    <script src="components/include-bars.js"></script>
+    <script src="js/offers.js"></script>
+</body>
+</html>

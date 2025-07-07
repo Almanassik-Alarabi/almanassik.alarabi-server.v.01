@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الوكالات المعتمدة للعمرة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/agencies.css">
+</head>
+<body>
+  <div id="top-bar-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Search Section -->
+        <section class="search-section" style="margin-top: 90px;">
+            <div class="search-container" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #fff; border-radius: 18px; box-shadow: 0 2px 10px rgba(76,175,80,0.08); padding: 18px 12px 10px 12px; min-height: 60px;">
+                <input type="text" class="search-input" placeholder="ابحث عن وكالة..." style="flex:1; min-width:180px; border-radius:30px; border:1px solid #eee; padding:12px 18px; font-size:16px;">
+                <select class="wilaya-filter" style="padding: 12px 18px; border-radius: 30px; border:1px solid #eee; font-size:15px; min-width:120px;">
+                    <option value="">كل الولايات</option>
+                </select>
+                <button class="nearby-btn" style="background:var(--primary-color);color:#fff;border:none;padding:12px 18px;border-radius:30px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:15px;">
+                    <i class="fas fa-map-marker-alt"></i> الأقرب إليك
+                </button>
+            
+            </div>
+        </section>
+
+        <!-- Agencies Grid -->
+        <section class="agencies-grid" id="agencies-grid">
+            <!-- البطاقات ستضاف ديناميكياً -->
+        </section>
+    </main>
+
+    
+    <!-- Floating Button -->
+
+    <div id="bottom-bar-placeholder"></div>
+    <script src="components/include-bars.js"></script>
+    <script src="js/agencies.js"></script>
+</body>
+</html>

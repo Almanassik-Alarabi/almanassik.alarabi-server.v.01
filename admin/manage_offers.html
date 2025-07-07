@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<!-- NOTE: Make sure this file is saved as UTF-8 (without BOM). Do not add any characters before <!DOCTYPE html>. -->
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>إدارة العروض | Manage Offers</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/manage_offers.css" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- Sidebar -->
+      <div id="sidebar"></div>
+      <!-- Main Content -->
+      <div class="main-content" id="mainContent">
+        <!-- Header -->
+        <div class="header">
+          <div class="header-left">
+            <h1
+              data-ar="إدارة العروض"
+              data-en="Manage Offers"
+              data-fr="Gérer les Offres"
+            >
+              إدارة العروض
+            </h1>
+            <p
+              data-ar="عرض وإدارة جميع عروض الوكالات السياحية"
+              data-en="View and manage all travel agency offers"
+              data-fr="Voir et gérer toutes les offres des agences de voyage"
+            >
+              عرض وإدارة جميع عروض الوكالات السياحية
+            </p>
+          </div>
+          <div class="header-right">
+            <div class="language-switcher">
+              <button class="lang-btn active" data-lang="ar">العربية</button>
+              <button class="lang-btn" data-lang="en">English</button>
+              <button class="lang-btn" data-lang="fr">Français</button>
+            </div>
+            <div class="user-info">
+              <div class="user-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div>
+                <div style="font-weight: 600">المدير العام</div>
+                <div style="font-size: 0.9rem; color: var(--text-secondary)">
+                  admin@umrah.com
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Actions Section -->
+        <div class="actions-section">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input
+              type="text"
+              id="searchOffers"
+              placeholder="البحث عن العروض..."
+              data-ar-placeholder="البحث عن العروض..."
+              data-en-placeholder="Search offers..."
+              data-fr-placeholder="Rechercher des offres..."
+            />
+          </div>
+          <div class="action-buttons">
+            <button class="btn btn-primary" id="openAddOfferModalBtn">
+              <i class="fas fa-plus"></i>
+              <span>إضافة عرض</span>
+            </button>
+            <button class="btn btn-success" id="exportOffersBtn">
+              <i class="fas fa-download"></i>
+              <span>تصدير البيانات</span>
+            </button>
+          </div>
+        </div>
+        <!-- Offers Grid -->
+        <div class="agencies-grid" id="offersGrid">
+          <!-- البيانات تُحقن عبر جافاسكريبت -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: إضافة عرض جديد أو تعديل عرض -->
+    <div id="addOfferModal" class="modal" style="display: none">
+      <div class="modal-content custom-modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">
+            <i class="fas fa-gift"></i>
+            <span>إضافة عرض جديد</span>
+          </h2>
+          <span class="close" id="closeAddOfferModalBtn">&times;</span>
+        </div>
+        <form
+          id="addOfferForm"
+          autocomplete="off"
+          enctype="multipart/form-data"
+        >
+          <div class="form-group">
+            <label>اسم العرض</label>
+            <input type="text" name="title" required />
+          </div>
+            <div class="form-group">
+            <label>الوكالة</label>
+            <select name="agency_id" id="agencySelect" required></select>
+          </div>
+          <div class="form-group">
+            <label>شركة الطيران</label>
+            <select name="airline_id" id="airlineSelect">
+              <option value="">بدون</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>نوع الرحلة</label>
+            <select name="flight_type" required>
+              <option value="مباشرة">مباشرة</option>
+              <option value="غير مباشرة">غير مباشرة</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>تاريخ الذهاب</label>
+            <input type="date" name="departure_date" required />
+          </div>
+          <div class="form-group">
+            <label>تاريخ العودة</label>
+            <input type="date" name="return_date" required />
+          </div>
+          <div class="form-group">
+            <label>مدة الرحلة (أيام)</label>
+            <input type="number" name="duration_days" min="1" required />
+          </div>
+          <div class="form-group">
+            <label>اسم الفندق</label>
+            <input type="text" name="hotel_name" />
+          </div>
+          <div class="form-group">
+            <label>المسافة إلى الحرم (متر)</label>
+            <input type="number" name="hotel_distance" min="0" />
+          </div>
+          <div class="form-group">
+            <label>صور الفندق</label>
+            <input
+              type="file"
+              name="hotel_images_file"
+              accept="image/*"
+              multiple
+            />
+          </div>
+          <div class="form-group">
+            <label>الخدمات</label>
+            <div id="servicesIconsContainer" style="margin-bottom:8px;"></div>
+            <input type="hidden" name="services" id="servicesInput" />
+          </div>
+          <div class="form-group">
+            <label>الوصف</label>
+            <textarea name="description" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>الدخول/الخروج</label>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+              <span>الدخول:</span>
+              <select name="entry" required style="min-width:90px;">
+                <option value="مكة">مكة</option>
+                <option value="المدينة">المدينة</option>
+              </select>
+              <span>الخروج:</span>
+              <select name="exit" required style="min-width:90px;">
+                <option value="مكة">مكة</option>
+                <option value="المدينة">المدينة</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>السعر (غرفة مزدوجة)</label>
+            <input type="number" name="price_double" min="0" />
+          </div>
+          <div class="form-group">
+            <label>السعر (غرفة ثلاثية)</label>
+            <input type="number" name="price_triple" min="0" />
+          </div>
+          <div class="form-group">
+            <label>السعر (غرفة رباعية)</label>
+            <input type="number" name="price_quad" min="0" />
+          </div>
+          <div class="form-group">
+            <label>السعر (غرفة خماسية)</label>
+            <input type="number" name="price_quint" min="0" />
+          </div>
+          <div class="form-group">
+            <label>الصورة الرئيسية</label>
+            <input type="file" name="main_image_file" accept="image/*" />
+          </div>
+          <div style="text-align: left; margin-top: 10px">
+            <button type="submit" class="btn btn-primary">حفظ</button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="cancelAddOfferBtn"
+            >
+              إلغاء
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+<style>
+    /* Modal Overlay */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: auto;
+        background: rgba(23, 106, 61, 0.09); /* أخضر باهت شفاف */
+        justify-content: center;
+        align-items: center;
+      }
+      .modal.show {
+        display: flex !important;
+      }
+
+      /* Modal Content */
+      .custom-modal-content {
+        background: linear-gradient(
+          125deg,
+          #fff 70%,
+          var(--primary-light) 100%
+        );
+        border-radius: var(--border-radius);
+        margin: 30px auto;
+        padding: 32px 24px 24px 24px;
+        max-width: 600px;
+        width: 95vw;
+        box-shadow: var(--shadow);
+        border: 2.5px solid var(--gold-light);
+        max-height: 90vh;
+        overflow-y: auto;
+        direction: rtl;
+        position: relative;
+        animation: modal-in 0.3s;
+      }
+
+      /* Modal Header & Title */
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+      .modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-shadow: 0 2px 7px var(--gold-light);
+        letter-spacing: 0.3px;
+        border-right: 5px solid var(--gold);
+        padding-right: 12px;
+        background: linear-gradient(
+          90deg,
+          var(--gold-light) 0 25%,
+          transparent 80%
+        );
+        border-radius: 7px 0 0 7px;
+      }
+
+      .modal .close {
+        font-size: 2rem;
+        color: var(--gold);
+        cursor: pointer;
+        transition: color 0.2s, background 0.2s;
+        background: none;
+        border: none;
+        outline: none;
+        border-radius: 50%;
+        padding: 2px 10px 1px 10px;
+      }
+      .modal .close:hover {
+        color: #fff;
+        background: var(--primary);
+      }
+
+      /* Form Style */
+      #addOfferForm {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 13px;
+        position: relative;
+      }
+      .form-group label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 1.07rem;
+        letter-spacing: 0.2px;
+      }
+      .form-group input[type="text"],
+      .form-group input[type="number"],
+      .form-group input[type="date"],
+      .form-group input[type="file"],
+      .form-group select,
+      .form-group textarea {
+        padding: 9px 12px;
+        border: 1.5px solid var(--primary-light);
+        border-radius: 6px;
+        font-size: 1rem;
+        background: #fafbfc;
+        transition: border 0.2s;
+      }
+      .form-group input[type="file"] {
+        padding: 6px 0;
+        background: none;
+      }
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        border-color: var(--gold);
+        outline: none;
+        background: var(--gold-light);
+      }
+      .form-group textarea {
+        resize: vertical;
+        min-height: 60px;
+      }
+
+      /* Buttons */
+      .btn {
+        padding: 9px 22px;
+        border: none;
+        border-radius: 7px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+        box-shadow: 0 2px 10px #f7ca1855;
+        margin-top: 2px;
+      }
+      .btn-primary {
+        background: linear-gradient(
+          120deg,
+          var(--primary) 60%,
+          var(--gold) 100%
+        );
+        color: #fff;
+        border: 1.5px solid var(--gold);
+      }
+      .btn-primary:hover {
+        background: linear-gradient(
+          120deg,
+          var(--gold) 60%,
+          var(--primary) 100%
+        );
+        color: #fff;
+      }
+      .btn-secondary {
+        background: var(--gold-light);
+        color: var(--primary-dark);
+        border: 1.2px solid var(--gold);
+        margin-right: 8px;
+      }
+      .btn-secondary:hover {
+        background: var(--primary-light);
+        color: var(--gold);
+      }
+
+      /* Responsive */
+      @media (max-width: 600px) {
+        .custom-modal-content {
+          padding: 18px 6vw;
+          max-width: 98vw;
+        }
+        .modal-title {
+          font-size: 1.1rem;
+          padding-right: 7px;
+        }
+      }</style>
+    <!-- Modal تفاصيل العرض -->
+    <div id="offerDetailsModal" class="modal" style="display: none">
+      <div id="offerDetailsContent" style="padding: 20px"></div>
+    </div>
+
+
+    <script src="js/manage_offers.js"></script>
+    <script>
+      // دالة لعرض رسالة قصيرة عائمة بدلاً من alert
+      function showShortMessage(message, type = 'info', duration = 2500) {
+        // إزالة أي رسالة سابقة
+        const oldMsg = document.getElementById('shortMsgToast');
+        if (oldMsg) oldMsg.remove();
+        // إنشاء العنصر
+        const msgDiv = document.createElement('div');
+        msgDiv.id = 'shortMsgToast';
+        msgDiv.textContent = message;
+        msgDiv.style.position = 'fixed';
+        msgDiv.style.bottom = '40px';
+        msgDiv.style.left = '50%';
+        msgDiv.style.transform = 'translateX(-50%)';
+        msgDiv.style.background = type === 'success' ? 'linear-gradient(90deg,#1e824c,#f7ca18)' : (type === 'error' ? '#c0392b' : '#34495e');
+        msgDiv.style.color = '#fff';
+        msgDiv.style.padding = '13px 32px';
+        msgDiv.style.borderRadius = '12px';
+        msgDiv.style.fontSize = '1.1em';
+        msgDiv.style.fontWeight = 'bold';
+        msgDiv.style.boxShadow = '0 2px 16px #0002';
+        msgDiv.style.zIndex = 9999;
+        msgDiv.style.opacity = '0.97';
+        msgDiv.style.letterSpacing = '0.5px';
+        msgDiv.style.textAlign = 'center';
+        document.body.appendChild(msgDiv);
+        setTimeout(() => {
+          msgDiv.style.transition = 'opacity 0.5s';
+          msgDiv.style.opacity = '0';
+          setTimeout(() => msgDiv.remove(), 600);
+        }, duration);
+      }
+    </script>
+    <style>
+      /* تصغير حجم بطاقات الخدمات */
+      #servicesIconsContainer {
+        gap: 10px !important;
+      }
+      .service-icon-select {
+        font-size: 1.2em !important;
+        min-width: 60px !important;
+        padding: 10px 10px 6px 10px !important;
+        border-radius: 9px !important;
+      }
+      .service-icon-select .icon {
+        font-size: 1.5em !important;
+        margin-bottom: 4px !important;
+      }
+      .service-icon-select .label {
+        font-size: 0.85em !important;
+      }
+    </style>
+    <script>
+     
+    </script>
+  </body>
+</html>
