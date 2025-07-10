@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>لوحة تحكم منصة العمرة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/manage_admin.css" />
+    <link rel="stylesheet" href="css/dashboard.css" />
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- Sidebar -->
+      <div id="sidebar"></div>
+      <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+          <div class="header-left">
+            <h1
+              data-ar="إدارة الوكالات السياحية"
+              data-en="Manage Travel Agencies"
+              data-fr="Gérer les Agences de Voyage"
+            >
+              إدارة الوكالات السياحية
+            </h1>
+            <p
+              data-ar="عرض وإدارة جميع الوكالات السياحية المقبولة في النظام"
+              data-en="View and manage all approved travel agencies in the system"
+              data-fr="Voir et gérer toutes les agences de voyage approuvées dans le système"
+            >
+              عرض وإدارة جميع الوكالات السياحية المقبولة في النظام
+            </p>
+          </div>
+          <div class="header-right">
+            <div class="language-switcher">
+              <button class="lang-btn active" data-lang="ar">العربية</button>
+              <button class="lang-btn" data-lang="en">English</button>
+              <button class="lang-btn" data-lang="fr">Français</button>
+            </div>
+            <div class="user-info">
+              <div class="user-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div>
+                <div style="font-weight: 600">المدير العام</div>
+                <div style="font-size: 0.9rem; color: var(--text-secondary)">
+                  admin@umrah.com
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- إحصائيات -->
+        <div class="stats-grid" id="statsGrid">
+          <!-- سيتم تعبئتها عبر JS: إجمالي الوكالات، إجمالي المعتمرين، العروض النشطة، الطلبات المعلقة، الوكالات المعلقة، سجل نشاطات المدراء -->
+        </div>
+        <!-- المخططات -->
+        <div class="charts-section">
+          <div class="chart-card">
+            <div class="chart-title">إحصائيات الحجوزات الشهرية</div>
+            <canvas id="monthlyBookingsChart" height="180"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">توزيع الوكالات حسب الولاية</div>
+            <canvas id="agencyDistributionChart" height="180"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">أكثر الوكالات التي لديها عروض</div>
+            <canvas id="topAgenciesByOffersChart" height="180"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">العروض الأكثر طلبا</div>
+            <canvas id="topRequestedOffersChart" height="180"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">زيارات الموقع الشهري (آخر 12 شهر)</div>
+            <canvas id="siteVisitsMonthlyChart" height="180"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">أكثر وكالة أضافت عروضًا في كل سنة (آخر 10 سنوات)</div>
+            <canvas id="topAgencyByOffersPerYearChart" height="180"></canvas>
+          </div>
+        </div>
+        <!-- تم حذف قسم الوكالات المعلقة من لوحة التحكم بناءً على طلبك -->
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/dashbord.js"></script>
+    
+  </body>
+</html>

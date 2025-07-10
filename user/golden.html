@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="منصة العمرة - عروض العمرة المميزة">
+    <meta name="theme-color" content="#004d40">
+    <title>منصة العمرة - العروض المميزة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Amiri:wght@700&display=swap" rel="stylesheet">
+     <link rel="stylesheet" href="css/golden.css">
+
+</head>
+<body>
+    <!-- خلفية الصفحة -->
+    <div class="page-bg"></div>
+
+    <!-- يتم استدعاء الشريط العلوي من ملف خارجي -->
+    <div id="header-placeholder"></div>
+
+    <!-- عنوان الصفحة -->
+    <header class="page-header">
+        <h1 class="page-title">العروض المميزة</h1>
+        <p class="page-subtitle">اختر من بين أفضل برامج العمرة المناسبة لك</p>
+    </header>
+
+    <!-- فلترة العروض -->
+    <section class="filters-section">
+        <div class="filter-group">
+            <label for="city" class="filter-label">المدينة</label>
+            <select id="city" class="filter-select">
+                <option value="">جميع المدن</option>
+                <option value="makkah">مكة المكرمة</option>
+                <option value="madina">المدينة المنورة</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="duration" class="filter-label">المدة</label>
+            <select id="duration" class="filter-select">
+                <option value="">جميع المدد</option>
+                <option value="7">7 أيام</option>
+                <option value="10">10 أيام</option>
+                <option value="14">14 يوم</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="hotel" class="filter-label">فندق</label>
+            <select id="hotel" class="filter-select">
+                <option value="">جميع الفنادق</option>
+                <option value="5">5 نجوم</option>
+                <option value="4">4 نجوم</option>
+                <option value="3">3 نجوم</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="price" class="filter-label">السعر</label>
+            <select id="price" class="filter-select">
+                <option value="">جميع الأسعار</option>
+                <option value="5000">أقل من 5000 ر.س</option>
+                <option value="10000">أقل من 10000 ر.س</option>
+                <option value="15000">أقل من 15000 ر.س</option>
+            </select>
+        </div>
+        
+        <button class="filter-btn">
+            <i class="fas fa-filter"></i>
+            تصفية العروض
+        </button>
+    </section>
+
+    <!-- قائمة العروض -->
+    <section class="offers-container">
+        <!-- سيتم تعبئة العروض ديناميكياً من خلال offers.js -->
+    </section>
+
+    <!-- يتم استدعاء الشريط السفلي من ملف خارجي -->
+    <div id="bottom-bar-placeholder"></div>
+
+    <!-- زر العودة للأعلى -->
+    <button class="scroll-top" onclick="scrollToTop()">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="components/include-bars.js"></script>
+    <script src="js/golden.js"></script>
+</body>
+</html>
