@@ -1,7 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../../supabaseClient');
-// --- رفع صورة الجواز عبر Cloudinary ---
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -11,6 +9,11 @@ cloudinary.config({
   api_key: '872325744724379',
   api_secret: 'Fgy866yvuuargXrgfn7idGFEHlw'
 });
+
+// استخدم req.supabase إذا كان موجودًا (تم تمريره من server.js)، وإلا fallback للقديم (للاستدعاءات المباشرة)
+function getSupabase(req) {
+  return (req && req.supabase) ? req.supabase : require('../../supabaseAdmin');
+}
 
 // رفع صورة الجواز (يتطلب توكن مدير)
 router.post('/upload/passport', upload.single('passport'), async (req, res) => {
@@ -44,6 +47,7 @@ async function verifyToken(req, res, next) {
     return res.status(401).json({ error: 'يرجى إرسال التوكن في الهيدر (Authorization: Bearer <token>)' });
   }
   const token = authHeader.split(' ')[1];
+  const supabase = getSupabase(req);
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data || !data.user) {
     return res.status(401).json({ error: 'توكن غير صالح أو منتهي الصلاحية.' });
@@ -58,6 +62,7 @@ router.use(verifyToken);
 router.post('/add', async (req, res) => {
   const fields = req.body;
   fields.status = 'قيد الانتظار';
+  const supabase = getSupabase(req);
   const { data, error } = await supabase.from('bookings').insert([fields]).select();
   if (error) {
     return res.status(500).json({ error: error.message });
@@ -67,23 +72,32 @@ router.post('/add', async (req, res) => {
 
 // موافقة المدير أو المدير الفرعي المسؤول عن إدارة الطلبيات (status → بانتظار موافقة الوكالة)
 router.put('/approve-by-admin/:id', async (req, res) => {
-  // تحقق من أن المستخدم مدير عام أو مدير فرعي لديه صلاحية إدارة الطلبيات (manage_bookings)
-  const { data: admin, error: adminError } = await supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
-  if (adminError || !admin) {
-    return res.status(403).json({ error: 'غير مصرح. يرجى تسجيل الدخول كمدير.' });
+  try {
+    const supabase = getSupabase(req);
+    // تحقق من أن المستخدم مدير عام أو مدير فرعي لديه صلاحية إدارة الطلبيات (manage_bookings)
+    const { data: admin, error: adminError } = await supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
+    if (adminError || !admin) {
+      console.error('approve-by-admin: adminError', adminError);
+      return res.status(403).json({ error: 'غير مصرح. يرجى تسجيل الدخول كمدير.' });
+    }
+    if (
+      admin.role !== 'main' &&
+      !(admin.permissions && admin.permissions.manage_bookings === true)
+    ) {
+      console.error('approve-by-admin: insufficient permissions', admin);
+      return res.status(403).json({ error: 'غير مصرح. فقط المدير العام أو مدير فرعي لديه صلاحية إدارة الطلبيات يمكنه الموافقة الأولية.' });
+    }
+    const { id } = req.params;
+    const { data, error } = await supabase.from('bookings').update({ status: 'بانتظار موافقة الوكالة' }).eq('id', id).select();
+    if (error) {
+      console.error('approve-by-admin: update error', error);
+      return res.status(500).json({ error: error.message });
+    }
+    res.json({ message: 'تمت الموافقة من طرف الإدارة. بانتظار موافقة الوكالة.', data });
+  } catch (err) {
+    console.error('approve-by-admin: unexpected error', err);
+    res.status(500).json({ error: 'خطأ غير متوقع', details: err.message });
   }
-  if (
-    admin.role !== 'main' &&
-    !(admin.permissions && admin.permissions.manage_bookings === true)
-  ) {
-    return res.status(403).json({ error: 'غير مصرح. فقط المدير العام أو مدير فرعي لديه صلاحية إدارة الطلبيات يمكنه الموافقة الأولية.' });
-  }
-  const { id } = req.params;
-  const { data, error } = await supabase.from('bookings').update({ status: 'بانتظار موافقة الوكالة' }).eq('id', id).select();
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
-  res.json({ message: 'تمت الموافقة من طرف الإدارة. بانتظار موافقة الوكالة.', data });
 });
 
 // موافقة الوكالة (status → مقبول)
@@ -91,6 +105,7 @@ router.put('/approve-by-agency/:id', async (req, res) => {
   // تحقق من أن المستخدم ينتمي للوكالة المرتبطة بالحجز
   const { id } = req.params;
   // جلب الحجز
+  const supabase = getSupabase(req);
   const { data: booking, error: bookingError } = await supabase.from('bookings').select('offer_id, status').eq('id', id).single();
   if (bookingError || !booking) {
     return res.status(404).json({ error: 'الحجز غير موجود.' });
@@ -119,34 +134,47 @@ router.put('/approve-by-agency/:id', async (req, res) => {
 
 // رفض الحجز (من المدير أو الوكالة) مع حذف الطلب نهائياً
 router.put('/reject/:id', async (req, res) => {
-  const { id } = req.params;
-  // يمكن للمدير العام أو الوكالة المالكة فقط الرفض
-  const { data: booking, error: bookingError } = await supabase.from('bookings').select('offer_id').eq('id', id).single();
-  if (bookingError || !booking) {
-    return res.status(404).json({ error: 'الحجز غير موجود.' });
+  try {
+    const supabase = getSupabase(req);
+    const { id } = req.params;
+    // يمكن للمدير العام أو الوكالة المالكة فقط الرفض
+    const { data: booking, error: bookingError } = await supabase.from('bookings').select('offer_id').eq('id', id).single();
+    if (bookingError || !booking) {
+      console.error('reject: bookingError', bookingError);
+      return res.status(404).json({ error: 'الحجز غير موجود.' });
+    }
+    // جلب العرض لمعرفة الوكالة المالكة
+    const { data: offer, error: offerError } = await supabase.from('offers').select('agency_id').eq('id', booking.offer_id).single();
+    if (offerError || !offer) {
+      console.error('reject: offerError', offerError);
+      return res.status(404).json({ error: 'العرض غير موجود.' });
+    }
+    // تحقق من صلاحية المستخدم
+    let isAllowed = false;
+    // مدير عام
+    const { data: admin, error: adminError } = await supabase.from('admins').select('role').eq('id', req.user.id).single();
+    if (!adminError && admin && admin.role === 'main') isAllowed = true;
+    // وكالة مالكة
+    const { data: agency, error: agencyError } = await supabase.from('agencies').select('id').eq('id', req.user.id).single();
+    if (!agencyError && agency && agency.id === offer.agency_id) isAllowed = true;
+    if (!isAllowed) {
+      console.error('reject: insufficient permissions', { admin, agency });
+      return res.status(403).json({ error: 'غير مصرح. فقط المدير العام أو الوكالة المالكة يمكنهم الرفض.' });
+    }
+    // حذف الحجز نهائياً
+    const { error } = await supabase.from('bookings').delete().eq('id', id);
+    if (error) {
+      console.error('reject: delete error', error);
+      return res.status(500).json({ error: error.message });
+    }
+    res.json({
+      message: 'تم حذف الحجز بنجاح!',
+      description: 'تم رفض وحذف طلب الحجز نهائياً من النظام. يمكنك الآن متابعة بقية الطلبات بكل سهولة.'
+    });
+  } catch (err) {
+    console.error('reject: unexpected error', err);
+    res.status(500).json({ error: 'خطأ غير متوقع في رفض الحجز', details: err.message });
   }
-  // جلب العرض لمعرفة الوكالة المالكة
-  const { data: offer, error: offerError } = await supabase.from('offers').select('agency_id').eq('id', booking.offer_id).single();
-  if (offerError || !offer) {
-    return res.status(404).json({ error: 'العرض غير موجود.' });
-  }
-  // تحقق من صلاحية المستخدم
-  let isAllowed = false;
-  // مدير عام
-  const { data: admin, error: adminError } = await supabase.from('admins').select('role').eq('id', req.user.id).single();
-  if (!adminError && admin && admin.role === 'main') isAllowed = true;
-  // وكالة مالكة
-  const { data: agency, error: agencyError } = await supabase.from('agencies').select('id').eq('id', req.user.id).single();
-  if (!agencyError && agency && agency.id === offer.agency_id) isAllowed = true;
-  if (!isAllowed) {
-    return res.status(403).json({ error: 'غير مصرح. فقط المدير العام أو الوكالة المالكة يمكنهم الرفض.' });
-  }
-  // حذف الحجز نهائياً
-  const { error } = await supabase.from('bookings').delete().eq('id', id);
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
-  res.json({ message: 'تم رفض الحجز وحذفه نهائياً.' });
 });
 
 module.exports = router;
@@ -154,6 +182,8 @@ module.exports = router;
 
 // جلب جميع الحجوزات مع اسم العرض واسم الوكالة (يدوياً)
 router.get('/all', async (req, res) => {
+  // استخدم getSupabase بدلاً من supabase مباشرة
+  const supabase = getSupabase(req);
   // السماح فقط للمدير العام أو المدير الفرعي المسؤول عن إدارة الطلبيات
   const { data: admin, error: adminError } = await supabase
     .from('admins')

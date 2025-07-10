@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../../supabaseClient');
 const cloudinary = require('cloudinary').v2;
 
 // حماية جميع العمليات في هذا الملف
@@ -10,7 +9,7 @@ async function verifyToken(req, res, next) {
     return res.status(401).json({ error: 'يرجى إرسال التوكن في الهيدر (Authorization: Bearer <token>)' });
   }
   const token = authHeader.split(' ')[1];
-  const { data, error } = await supabase.auth.getUser(token);
+  const { data, error } = await req.supabase.auth.getUser(token);
   if (error || !data || !data.user) {
     return res.status(401).json({ error: 'توكن غير صالح أو منتهي الصلاحية.' });
   }
@@ -23,6 +22,7 @@ router.use(verifyToken);
 
 // جلب جميع العروض
 router.get('/all', async (req, res) => {
+  const supabase = getSupabase(req);
   const { data, error } = await supabase.from('offers').select('*');
   if (error) {
     return res.status(500).json({ error: error.message });
@@ -34,7 +34,7 @@ router.get('/all', async (req, res) => {
 router.put('/update/:id', async (req, res) => {
   const { id } = req.params;
   // السماح فقط للمدير العام أو المدير الفرعي الذي لديه صلاحية إدارة العروض
-  const { data: currentAdmin, error: currentAdminError } = await supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
+  const { data: currentAdmin, error: currentAdminError } = await req.supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
   if (currentAdminError || !currentAdmin) {
     return res.status(401).json({ error: 'غير مصرح. يرجى تسجيل الدخول.' });
   }
@@ -45,6 +45,7 @@ router.put('/update/:id', async (req, res) => {
     return res.status(403).json({ error: 'غير مصرح. هذه العملية تتطلب صلاحية المدير العام أو مدير فرعي لديه صلاحية إدارة العروض.' });
   }
   const fields = req.body;
+  const supabase = getSupabase(req);
   const { data: updated, error } = await supabase.from('offers').update(fields).eq('id', id).select();
   if (error) {
     return res.status(500).json({ error: error.message });
@@ -56,7 +57,7 @@ router.put('/update/:id', async (req, res) => {
 router.delete('/delete/:id', async (req, res) => {
   const { id } = req.params;
   // السماح فقط للمدير العام أو المدير الفرعي الذي لديه صلاحية إدارة العروض
-  const { data: currentAdmin, error: currentAdminError } = await supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
+  const { data: currentAdmin, error: currentAdminError } = await req.supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
   if (currentAdminError || !currentAdmin) {
     return res.status(401).json({ error: 'غير مصرح. يرجى تسجيل الدخول.' });
   }
@@ -66,6 +67,7 @@ router.delete('/delete/:id', async (req, res) => {
   ) {
     return res.status(403).json({ error: 'غير مصرح. هذه العملية تتطلب صلاحية المدير العام أو مدير فرعي لديه صلاحية إدارة العروض.' });
   }
+  const supabase = getSupabase(req);
   const { error } = await supabase.from('offers').delete().eq('id', id);
   if (error) {
     return res.status(500).json({ error: error.message });
@@ -82,7 +84,7 @@ cloudinary.config({
 });
 router.post('/add', async (req, res) => {
   // السماح فقط للمدير العام أو المدير الفرعي الذي لديه صلاحية إدارة العروض
-  const { data: currentAdmin, error: currentAdminError } = await supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
+  const { data: currentAdmin, error: currentAdminError } = await req.supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
   if (currentAdminError || !currentAdmin) {
     return res.status(401).json({ error: 'غير مصرح. يرجى تسجيل الدخول.' });
   }
@@ -194,6 +196,7 @@ router.post('/add', async (req, res) => {
   };
 
   // إدراج العرض في جدول offers
+  const supabase = getSupabase(req);
   const { data: inserted, error } = await supabase.from('offers').insert([fields]).select();
   if (error) {
     return res.status(500).json({ error: error.message });
@@ -201,4 +204,39 @@ router.post('/add', async (req, res) => {
   res.json({ message: 'تمت إضافة العرض بنجاح', data: inserted });
 });
 
+// استخدم req.supabase إذا كان موجودًا (تم تمريره من server.js)، وإلا fallback للقديم (للاستدعاءات المباشرة)
+function getSupabase(req) {
+  return (req && req.supabase) ? req.supabase : require('../../supabaseAdmin');
+}
+
 module.exports = router;
+
+// تغيير حالة العرض إلى ذهبي أو عادي
+// فقط المدير العام أو مدير فرعي لديه صلاحية manage_offers
+router.patch('/toggle-golden/:id', async (req, res) => {
+  const { id } = req.params;
+  // السماح فقط للمدير العام أو المدير الفرعي الذي لديه صلاحية إدارة العروض
+  const { data: currentAdmin, error: currentAdminError } = await req.supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
+  if (currentAdminError || !currentAdmin) {
+    return res.status(401).json({ error: 'غير مصرح. يرجى تسجيل الدخول.' });
+  }
+  if (
+    currentAdmin.role !== 'main' &&
+    !(currentAdmin.permissions && currentAdmin.permissions.manage_offers === true)
+  ) {
+    return res.status(403).json({ error: 'غير مصرح. هذه العملية تتطلب صلاحية المدير العام أو مدير فرعي لديه صلاحية إدارة العروض.' });
+  }
+  const supabase = getSupabase(req);
+  // جلب العرض الحالي
+  const { data: offer, error: offerError } = await supabase.from('offers').select('is_golden').eq('id', id).single();
+  if (offerError || !offer) {
+    return res.status(404).json({ error: 'العرض غير موجود.' });
+  }
+  // عكس القيمة الحالية
+  const newIsGolden = !offer.is_golden;
+  const { data: updated, error: updateError } = await supabase.from('offers').update({ is_golden: newIsGolden }).eq('id', id).select();
+  if (updateError) {
+    return res.status(500).json({ error: updateError.message });
+  }
+  res.json({ message: `تم تغيير حالة العرض إلى ${newIsGolden ? 'ذهبي' : 'عادي'}`, data: updated });
+});

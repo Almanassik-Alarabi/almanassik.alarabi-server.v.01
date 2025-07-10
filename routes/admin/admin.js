@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../../supabaseClient');
+
+// ملاحظة: استخدم req.supabase إذا كان موجوداً (تم تمريره من server.js)، وإلا fallback للقديم (للاستدعاءات المباشرة)
+function getSupabase(req) {
+  return (req && req.supabase) ? req.supabase : require('../../supabaseAdmin');
+}
 
 // ميدلوير للتحقق من التوكن
 async function verifyToken(req, res, next) {
+  const supabase = getSupabase(req);
   const authHeader = req.headers['authorization'];
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'يرجى إرسال التوكن في الهيدر (Authorization: Bearer <token>)' });
@@ -26,6 +31,7 @@ router.use((req, res, next) => {
 // ---------------------- إدارة المدراء ----------------------
 // إنشاء مدير عام
 router.post('/add-admin', async (req, res) => {
+  const supabase = getSupabase(req);
   const { email, password, full_name } = req.body;
   if (!email || !password || !full_name) {
     return res.status(400).json({ error: 'يرجى إدخال جميع البيانات المطلوبة.' });
@@ -60,6 +66,7 @@ router.post('/add-admin', async (req, res) => {
 // إضافة مدير فرعي جديد (sub_admin)
 // body: { email, password, full_name, role, permissions, created_by }
 router.post('/add-sub-admin', async (req, res) => {
+  const supabase = getSupabase(req);
   // تحقق من أن المستخدم الحالي هو مدير عام
   if (!req.user || !req.user.id) {
     return res.status(401).json({ error: 'غير مصرح. يرجى تسجيل الدخول.' });
@@ -101,6 +108,7 @@ router.post('/add-sub-admin', async (req, res) => {
 
 // جلب جميع المدراء (main & sub)
 router.get('/all', async (req, res) => {
+  const supabase = getSupabase(req);
   const { data, error } = await supabase.from('admins').select('*');
   if (error) {
     return res.status(500).json({ error: error.message });
@@ -109,6 +117,7 @@ router.get('/all', async (req, res) => {
 });
 
 router.post('/login-admin', async (req, res) => {
+  const supabase = getSupabase(req);
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'يرجى إدخال البريد الإلكتروني وكلمة المرور.' });
@@ -132,6 +141,7 @@ router.post('/login-admin', async (req, res) => {
 
 // حذف مدير (sub, supremmier) عبر id فقط، لا يمكن حذف main admin
 router.delete('/delete/:id', async (req, res) => {
+  const supabase = getSupabase(req);
   const { id } = req.params;
   // تحقق من أن المستخدم الحالي هو مدير عام
   if (!req.user || !req.user.id) {
@@ -164,6 +174,7 @@ router.delete('/delete/:id', async (req, res) => {
 // تعديل بيانات مدير فرعي أو مميز (فقط المدير العام يمكنه التعديل)
 // PUT /api/admin/update/:id
 router.put('/update/:id', async (req, res) => {
+  const supabase = getSupabase(req);
   const { id } = req.params;
   // تحقق من أن المستخدم الحالي هو مدير عام
   if (!req.user || !req.user.id) {
@@ -204,6 +215,7 @@ router.put('/update/:id', async (req, res) => {
 // body: { is_active (اختياري, default=true) }
 router.post('/update-activity-status', async (req, res) => {
   try {
+    const supabase = getSupabase(req);
     const admin_id = req.user && req.user.id;
     if (!admin_id) {
       return res.status(401).json({ error: 'غير مصرح. يرجى تسجيل الدخول.' });
@@ -245,6 +257,7 @@ router.post('/update-activity-status', async (req, res) => {
 
 // جلب عدد المدراء النشطين الآن (فعلي)
 router.get('/active-now', async (req, res) => {
+  const supabase = getSupabase(req);
   // جلب عدد المدراء النشطين الآن من جدول admin_online_status
   // نشط إذا كان is_active = true و آخر ظهور خلال آخر 5 دقائق
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();

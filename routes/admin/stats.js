@@ -1,7 +1,25 @@
+
 const express = require('express');
 const router = express.Router();
 
-const supabase = require('../../supabaseClient');
+// جلب بريد المدير الحالي (المتصل)
+router.get('/current-admin-email', async (req, res) => {
+  try {
+    const supabase = getSupabase(req);
+    // جلب بيانات المدير الحالي من جدول admins
+    const { data: admin, error } = await supabase
+      .from('admins')
+      .select('email')
+      .eq('id', req.user.id)
+      .single();
+    if (error || !admin) {
+      return res.status(404).json({ error: 'لم يتم العثور على المدير.' });
+    }
+    res.json({ email: admin.email });
+  } catch (err) {
+    res.status(500).json({ error: 'حدث خطأ أثناء جلب البريد.' });
+  }
+});
 
 // ميدلوير حماية التوكن لجميع العمليات
 async function verifyToken(req, res, next) {
@@ -10,7 +28,7 @@ async function verifyToken(req, res, next) {
     return res.status(401).json({ error: 'يرجى إرسال التوكن في الهيدر (Authorization: Bearer <token>)' });
   }
   const token = authHeader.split(' ')[1];
-  const { data, error } = await supabase.auth.getUser(token);
+  const { data, error } = await req.supabase.auth.getUser(token);
   if (error || !data || !data.user) {
     return res.status(401).json({ error: 'توكن غير صالح أو منتهي الصلاحية.' });
   }
@@ -20,8 +38,14 @@ async function verifyToken(req, res, next) {
 
 router.use(verifyToken);
 
+// استخدم req.supabase إذا كان موجودًا (تم تمريره من server.js)، وإلا fallback للقديم (للاستدعاءات المباشرة)
+function getSupabase(req) {
+  return (req && req.supabase) ? req.supabase : require('../../supabaseAdmin');
+}
+
 // إجمالي الوكالات المقبولة فقط
 router.get('/total-agencies', async (req, res) => {
+  const supabase = getSupabase(req);
   const { count, error } = await supabase
     .from('agencies')
     .select('*', { count: 'exact', head: true })
@@ -32,6 +56,7 @@ router.get('/total-agencies', async (req, res) => {
 
 // إجمالي المعتمرين (عدد الحجوزات المقبولة نهائياً من طرف الوكالات)
 router.get('/total-pilgrims', async (req, res) => {
+  const supabase = getSupabase(req);
   // نفترض أن هناك حالة "مقبول نهائي" أو "مكتمل" أو ما شابه في status
   // إذا كانت الحالة مختلفة، يرجى تعديلها حسب قاعدة البيانات
   const { count, error } = await supabase
@@ -44,6 +69,7 @@ router.get('/total-pilgrims', async (req, res) => {
 
 // إجمالي العروض
 router.get('/total-offers', async (req, res) => {
+  const supabase = getSupabase(req);
   const { count, error } = await supabase.from('offers').select('*', { count: 'exact', head: true });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ total: count || 0 });
@@ -51,6 +77,7 @@ router.get('/total-offers', async (req, res) => {
 
 // عدد الطلبات المعلقة
 router.get('/pending-requests', async (req, res) => {
+  const supabase = getSupabase(req);
   const { count, error } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'قيد الانتظار');
   if (error) return res.status(500).json({ error: error.message });
   res.json({ total: count || 0 });
@@ -58,6 +85,7 @@ router.get('/pending-requests', async (req, res) => {
 
 // قائمة الوكالات المعلقة
 router.get('/pending-agencies', async (req, res) => {
+  const supabase = getSupabase(req);
   const { data, error } = await supabase
     .from('agencies')
     .select('id, name, wilaya, phone, is_approved') // أزل email لأنه غير موجود في الجدول
@@ -68,6 +96,7 @@ router.get('/pending-agencies', async (req, res) => {
 
 // إحصائيات الحجوزات الشهرية (آخر 12 شهر)
 router.get('/monthly-bookings', async (req, res) => {
+  const supabase = getSupabase(req);
   const { data, error } = await supabase.from('bookings').select('created_at').order('created_at', { ascending: true });
   if (error) return res.status(500).json({ error: error.message });
   const months = [];
@@ -87,6 +116,7 @@ router.get('/monthly-bookings', async (req, res) => {
 
 // توزيع الوكالات حسب الولاية (top 6)
 router.get('/agencies-by-wilaya', async (req, res) => {
+  const supabase = getSupabase(req);
   const { data, error } = await supabase.from('agencies').select('wilaya').neq('wilaya', null);
   if (error) return res.status(500).json({ error: error.message });
   const wilayaCount = {};
@@ -103,6 +133,7 @@ router.get('/agencies-by-wilaya', async (req, res) => {
 
 // تفاصيل وكالة واحدة
 router.get('/agency/:id', async (req, res) => {
+  const supabase = getSupabase(req);
   const { id } = req.params;
   const { data, error } = await supabase.from('agencies').select('*').eq('id', id).single();
   if (error || !data) return res.status(404).json({ error: 'الوكالة غير موجودة.' });
@@ -111,6 +142,7 @@ router.get('/agency/:id', async (req, res) => {
 
 // إجمالي الوكالات المقبولة
 router.get('/total-approved-agencies', async (req, res) => {
+  const supabase = getSupabase(req);
   const { count, error } = await supabase
     .from('agencies')
     .select('*', { count: 'exact', head: true })
@@ -121,6 +153,7 @@ router.get('/total-approved-agencies', async (req, res) => {
 
 // إجمالي الوكالات المرفوضة
 router.get('/total-rejected-agencies', async (req, res) => {
+  const supabase = getSupabase(req);
   const { count, error } = await supabase
     .from('agencies')
     .select('*', { count: 'exact', head: true })
@@ -131,6 +164,7 @@ router.get('/total-rejected-agencies', async (req, res) => {
 
 // إجمالي الحجوزات
 router.get('/total-bookings', async (req, res) => {
+  const supabase = getSupabase(req);
   const { count, error } = await supabase
     .from('bookings')
     .select('*', { count: 'exact', head: true });
@@ -140,6 +174,7 @@ router.get('/total-bookings', async (req, res) => {
 
 // إجمالي الحجوزات المقبولة
 router.get('/total-accepted-bookings', async (req, res) => {
+  const supabase = getSupabase(req);
   const { count, error } = await supabase
     .from('bookings')
     .select('*', { count: 'exact', head: true })
@@ -150,6 +185,7 @@ router.get('/total-accepted-bookings', async (req, res) => {
 
 // إجمالي الحجوزات المرفوضة
 router.get('/total-rejected-bookings', async (req, res) => {
+  const supabase = getSupabase(req);
   const { count, error } = await supabase
     .from('bookings')
     .select('*', { count: 'exact', head: true })
@@ -160,6 +196,7 @@ router.get('/total-rejected-bookings', async (req, res) => {
 
 // إجمالي المستخدمين (جدول users)
 router.get('/total-users', async (req, res) => {
+  const supabase = getSupabase(req);
   const { count, error } = await supabase
     .from('users')
     .select('*', { count: 'exact', head: true });
@@ -169,6 +206,7 @@ router.get('/total-users', async (req, res) => {
 
 // أكثر الوكالات التي لديها عروض (Top Agencies by Offers)
 router.get('/top-agencies-by-offers', async (req, res) => {
+  const supabase = getSupabase(req);
   const { data, error } = await supabase
     .from('offers')
     .select('agency_id');
@@ -200,6 +238,7 @@ router.get('/top-agencies-by-offers', async (req, res) => {
 
 // أكثر العروض طلباً (Top Requested Offers)
 router.get('/top-requested-offers', async (req, res) => {
+  const supabase = getSupabase(req);
   const { data, error } = await supabase
     .from('bookings')
     .select('offer_id');
@@ -231,6 +270,7 @@ router.get('/top-requested-offers', async (req, res) => {
 
 // نشاط المدراء الشهري (main/sub) بناءً على جدول admin_online_status
 router.get('/admin-activity-monthly', async (req, res) => {
+  const supabase = getSupabase(req);
   // months: آخر 12 شهر
   const months = [];
   const now = new Date();
@@ -276,6 +316,7 @@ router.get('/admin-activity', async (req, res) => {
 
 // أكثر وكالة أضافت عروضًا في كل سنة خلال آخر 10 سنوات
 router.get('/top-agency-by-offers-per-year', async (req, res) => {
+  const supabase = getSupabase(req);
   const now = new Date();
   const years = [];
   const topAgencies = [];
@@ -319,6 +360,7 @@ router.get('/top-agency-by-offers-per-year', async (req, res) => {
 
 // عدد المدراء النشطين الآن (main + sub فقط)
 router.get('/admin/active-now', async (req, res) => {
+  const supabase = getSupabase(req);
   const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
   // جلب المدراء النشطين الآن
   const { data: online, error: onlineErr } = await supabase

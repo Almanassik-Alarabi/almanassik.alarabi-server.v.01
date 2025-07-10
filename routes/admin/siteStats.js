@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../../supabaseClient');
+
+// استخدم req.supabase إذا كان موجودًا (تم تمريره من server.js)، وإلا fallback للقديم (للاستدعاءات المباشرة)
+function getSupabase(req) {
+  return (req && req.supabase) ? req.supabase : require('../../supabaseAdmin');
+}
 
 // زيادة عداد زيارات الشهر الحالي
 router.post('/visit', async (req, res) => {
+  const supabase = getSupabase(req);
   const now = new Date();
   const stat_month = now.toISOString().slice(0, 7); // yyyy-mm
   // جلب السطر الحالي
@@ -34,6 +39,7 @@ router.post('/visit', async (req, res) => {
 
 // جلب زيارات آخر 12 شهر
 router.get('/monthly', async (req, res) => {
+  const supabase = getSupabase(req);
   const now = new Date();
   const months = [];
   for (let i = 11; i >= 0; i--) {

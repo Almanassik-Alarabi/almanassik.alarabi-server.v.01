@@ -1,5 +1,5 @@
 ### تسجيل دخول مدير
-POST http://192.168.100.23 :3000/api/admin/login-admin
+POST http://192.168.0.114 :3000/api/admin/login-admin
 Content-Type: application/json
 
 {
@@ -8,7 +8,7 @@ Content-Type: application/json
 }
 
 ### إضافة مدير عام جديد
-POST http://192.168.100.23 :3000/api/admin/add-admin
+POST http://192.168.0.114 :3000/api/admin/add-admin
 Content-Type: application/json
 Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd2J5ZmgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3pyd3R4dnliZHhwaHlsc3Zqb3BpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI0Zjc1OTgzYS1lMjI4LTRjZjMtYjc4Yi0yMTAxYmUwZmYzMGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzUxMjMzOTgxLCJpYXQiOjE3NTEyMzAzODEsImVtYWlsIjoibWFpbmFkbWluQGVtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzUxMjMwMzgxfV0sInNlc3Npb25faWQiOiI4ZGVkNDhhYi0xNzdmLTQxOGItOWJmYS0xNzQ1NTQ5OWJiNGMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.CHWRbHF1MinsM2ezWSx0JR6lCoW3vbs94f613v_ikqc
 
@@ -19,11 +19,11 @@ Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd
 }
 
 ### جلب جميع المدراء
-GET http://192.168.100.23 :3000/api/admin/all
+GET http://192.168.0.114 :3000/api/admin/all
 Authorization: Bearer {{access_token}}
 
 ### إضافة مدير فرعي جديد
-POST http://192.168.100.23 :3000/api/admin/add-sub-admin
+POST http://192.168.0.114 :3000/api/admin/add-sub-admin
 Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
@@ -37,7 +37,7 @@ Authorization: Bearer {{access_token}}
 }
 
 ### تعديل بيانات مدير فرعي
-PUT http://192.168.100.23 :3000/api/admin/update/1
+PUT http://192.168.0.114 :3000/api/admin/update/1
 Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
@@ -47,11 +47,11 @@ Authorization: Bearer {{access_token}}
 }
 
 ### حذف مدير فرعي
-DELETE http://192.168.100.23 :3000/api/admin/delete/1
+DELETE http://192.168.0.114 :3000/api/admin/delete/1
 Authorization: Bearer {{access_token}}
 
 ### إضافة وكالة جديدة
-POST http://192.168.100.23 :3000/api/agencies/add
+POST http://192.168.0.114 :3000/api/agencies/add
 Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
@@ -71,15 +71,15 @@ Authorization: Bearer {{access_token}}
 }
 
 ### جلب جميع الوكالات
-GET http://192.168.100.23 :3000/api/agencies/all
+GET http://192.168.0.114 :3000/api/agencies/all
 Authorization: Bearer {{access_token}}
 
 ### جلب الوكالات المعلقة فقط
-GET http://192.168.100.23 :3000/api/agencies/pending
+GET http://192.168.0.114 :3000/api/agencies/pending
 Authorization: Bearer {{access_token}}
 
 ### قبول أو تعليق وكالة
-PUT http://192.168.100.23 :3000/api/agencies/status/1
+PUT http://192.168.0.114 :3000/api/agencies/status/1
 Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
@@ -89,7 +89,7 @@ Authorization: Bearer {{access_token}}
 
 
 ### إضافة عرض جديد
-POST http://192.168.100.23 :3000/api/offers/add
+POST http://192.168.0.114 :3000/api/offers/add
 Content-Type: application/json
 Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd2J5ZmgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3pyd3R4dnliZHhwaHlsc3Zqb3BpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI0Zjc1OTgzYS1lMjI4LTRjZjMtYjc4Yi0yMTAxYmUwZmYzMGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzUxMjMzOTgxLCJpYXQiOjE3NTEyMzAzODEsImVtYWlsIjoibWFpbmFkbWluQGVtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzUxMjMwMzgxfV0sInNlc3Npb25faWQiOiI4ZGVkNDhhYi0xNzdmLTQxOGItOWJmYS0xNzQ1NTQ5OWJiNGMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.CHWRbHF1MinsM2ezWSx0JR6lCoW3vbs94f613v_ikqc
 
@@ -115,11 +115,11 @@ Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd
 }
 
 ### جلب جميع العروض
-GET http://192.168.100.23 :3000/api/offers/all
+GET http://192.168.0.114 :3000/api/offers/all
 Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd2J5ZmgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3pyd3R4dnliZHhwaHlsc3Zqb3BpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI0Zjc1OTgzYS1lMjI4LTRjZjMtYjc4Yi0yMTAxYmUwZmYzMGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzUxMjMzOTgxLCJpYXQiOjE3NTEyMzAzODEsImVtYWlsIjoibWFpbmFkbWluQGVtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzUxMjMwMzgxfV0sInNlc3Npb25faWQiOiI4ZGVkNDhhYi0xNzdmLTQxOGItOWJmYS0xNzQ1NTQ5OWJiNGMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.CHWRbHF1MinsM2ezWSx0JR6lCoW3vbs94f613v_ikqc
 
 ### تعديل عرض
-PUT http://192.168.100.23 :3000/api/offers/update/1
+PUT http://192.168.0.114 :3000/api/offers/update/1
 Content-Type: application/json
 Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd2J5ZmgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3pyd3R4dnliZHhwaHlsc3Zqb3BpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI0Zjc1OTgzYS1lMjI4LTRjZjMtYjc4Yi0yMTAxYmUwZmYzMGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzUxMjMzOTgxLCJpYXQiOjE3NTEyMzAzODEsImVtYWlsIjoibWFpbmFkbWluQGVtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzUxMjMwMzgxfV0sInNlc3Npb25faWQiOiI4ZGVkNDhhYi0xNzdmLTQxOGItOWJmYS0xNzQ1NTQ5OWJiNGMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.CHWRbHF1MinsM2ezWSx0JR6lCoW3vbs94f613v_ikqc
 
@@ -129,6 +129,6 @@ Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd
 }
 
 ### حذف عرض
-DELETE http://192.168.100.23 :3000/api/offers/delete/1
+DELETE http://192.168.0.114 :3000/api/offers/delete/1
 Authorization: Bearer access_token=eyJhbGciOiJIUzI1NiIsImtpZCI6IjA0SEgwTHhmd0pGd2J5ZmgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3pyd3R4dnliZHhwaHlsc3Zqb3BpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI0Zjc1OTgzYS1lMjI4LTRjZjMtYjc4Yi0yMTAxYmUwZmYzMGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzUxMjMzOTgxLCJpYXQiOjE3NTEyMzAzODEsImVtYWlsIjoibWFpbmFkbWluQGVtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzUxMjMwMzgxfV0sInNlc3Npb25faWQiOiI4ZGVkNDhhYi0xNzdmLTQxOGItOWJmYS0xNzQ1NTQ5OWJiNGMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.CHWRbHF1MinsM2ezWSx0JR6lCoW3vbs94f613v_ikqc
 

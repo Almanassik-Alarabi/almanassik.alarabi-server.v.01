@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../../supabaseClient');
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -12,9 +11,14 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// ملاحظة: استخدم req.supabase إذا كان موجوداً (تم تمريره من server.js)، وإلا fallback للقديم (للاستدعاءات المباشرة)
+function getSupabase(req) {
+  return (req && req.supabase) ? req.supabase : require('../../supabaseAdmin');
+}
 
 // ميدلوير للتحقق من التوكن
 async function verifyToken(req, res, next) {
+  const supabase = getSupabase(req);
   const authHeader = req.headers['authorization'];
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'يرجى إرسال التوكن في الهيدر (Authorization: Bearer <token>)' });
@@ -33,6 +37,7 @@ router.use(verifyToken);
 
 // جلب جميع الوكالات مع معلومات المستخدم من auth (البريد الإلكتروني)
 router.get('/all', async (req, res) => {
+  const supabase = getSupabase(req);
   // السماح فقط للمدير العام أو المدير الفرعي الذي لديه صلاحية إدارة الوكالات (permissions.manage_agencies)
   const { data: currentAdmin, error: currentAdminError } = await supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
   if (currentAdminError || !currentAdmin) {
@@ -68,6 +73,7 @@ router.get('/all', async (req, res) => {
 
 // جلب الوكالات المعلقة فقط (is_approved = false)
 router.get('/pending', async (req, res) => {
+  const supabase = getSupabase(req);
   // السماح فقط للمدير العام أو المدير الفرعي الذي لديه صلاحية can_approve_agencies
   const { data: currentAdmin, error: currentAdminError } = await supabase.from('admins').select('role, permissions').eq('id', req.user.id).single();
   if (currentAdminError || !currentAdmin) {
@@ -88,6 +94,7 @@ router.get('/pending', async (req, res) => {
 
 // إضافة وكالة جديدة (يدعم json أو multipart/form-data للصور)
 router.post('/add', async (req, res) => {
+  const supabase = getSupabase(req);
   try {
     const {
       email,
@@ -166,6 +173,7 @@ router.post('/add', async (req, res) => {
 
 // تحديث حالة الوكالة (قبول/تعليق) - فقط المدير العام يمكنه ذلك
 router.put('/status/:id', async (req, res) => {
+  const supabase = getSupabase(req);
   const { id } = req.params;
   const { is_approved } = req.body;
   // تحقق من أن المستخدم الحالي هو مدير عام
@@ -181,6 +189,7 @@ router.put('/status/:id', async (req, res) => {
   res.json({ message: is_approved ? 'تم قبول الوكالة' : 'تم تعليق الوكالة', data });
 });
 router.delete('/remove/:id', async (req, res) => {
+  const supabase = getSupabase(req);
   const { id } = req.params;
 
   // تحقق من الصلاحيات
@@ -227,6 +236,7 @@ function extractPublicId(url) {
 
 // تعديل بيانات وكالة مع تحديث الصور في Cloudinary إذا تم تغييرها
 router.put('/update/:id', async (req, res) => {
+  const supabase = getSupabase(req);
   const { id } = req.params;
   const {
     name,
