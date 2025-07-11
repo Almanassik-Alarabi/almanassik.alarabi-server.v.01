@@ -30,11 +30,23 @@ router.use((req, res, next) => {
 
 // ---------------------- إدارة المدراء ----------------------
 // إنشاء مدير عام
+// إنشاء مدير عام (بدون الحاجة إلى توكن)
 router.post('/add-admin', async (req, res) => {
   const supabase = getSupabase(req);
   const { email, password, full_name } = req.body;
   if (!email || !password || !full_name) {
     return res.status(400).json({ error: 'يرجى إدخال جميع البيانات المطلوبة.' });
+  }
+  // تحقق إذا كان هناك مدير عام موجود بالفعل
+  const { data: existingAdmins, error: fetchError } = await supabase
+    .from('admins')
+    .select('id')
+    .eq('role', 'main');
+  if (fetchError) {
+    return res.status(500).json({ error: fetchError.message });
+  }
+  if (existingAdmins && existingAdmins.length > 0) {
+    return res.status(403).json({ error: 'يوجد مدير عام بالفعل. لا يمكن إنشاء أكثر من مدير عام.' });
   }
   // إنشاء مستخدم جديد في supabase auth
   const { data: userData, error: signUpError } = await supabase.auth.admin.createUser({
