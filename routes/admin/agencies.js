@@ -33,7 +33,7 @@ async function verifyToken(req, res, next) {
 }
 
 // حماية جميع العمليات في هذا الملف
-// router.use(verifyToken);
+router.use(verifyToken);
 
 // جلب جميع الوكالات مع معلومات المستخدم من auth (البريد الإلكتروني)
 router.get('/all', async (req, res) => {
@@ -96,7 +96,7 @@ router.get('/pending', async (req, res) => {
 router.post('/add', async (req, res) => {
   const supabase = getSupabase(req);
   try {
-    // ...existing code...
+   // ...existing code...
 const {
   email,
   // password,  // احذف هذا السطر أو تجاهله
@@ -112,7 +112,7 @@ const {
   longitude
 } = req.body;
 const password = "almanassik-alarabis"; // كلمة مرور ثابتة
-// ...existing code...
+
     // إنشاء مستخدم في auth
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email,
@@ -355,46 +355,6 @@ router.put('/update/:id', async (req, res) => {
   }
 
   res.json({ message: 'تم تحديث بيانات الوكالة بنجاح', data });
-});
-
-// تسجيل دخول الوكالات
-router.post('/login-agencie', async (req, res) => {
-  const supabase = getSupabase(req);
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'يرجى إدخال البريد الإلكتروني وكلمة المرور.' });
-  }
-
-  // تسجيل الدخول عبر supabase.auth.signInWithPassword
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error || !data || !data.user) {
-    return res.status(401).json({ error: 'بيانات الدخول غير صحيحة.' });
-  }
-
-  // التحقق من أن الوكالة موافق عليها
-  const { data: agency, error: agencyError } = await supabase
-    .from('agencies')
-    .select('is_approved')
-    .eq('id', data.user.id)
-    .single();
-
-  if (agencyError || !agency) {
-    return res.status(404).json({ error: 'الوكالة غير موجودة.' });
-  }
-
-  if (!agency.is_approved) {
-    return res.status(403).json({ error: 'لم يتم قبول الوكالة بعد من الإدارة.' });
-  }
-
-  res.json({
-    token: data.session.access_token,
-    user: {
-      id: data.user.id,
-      email: data.user.email,
-      is_approved: agency.is_approved
-    }
-  });
 });
 
 
