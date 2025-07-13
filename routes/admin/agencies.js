@@ -111,7 +111,7 @@ const {
   latitude,
   longitude
 } = req.body;
-const password = "almanassik-alarabis"; // كلمة مرور ثابتة
+const password = "almanassik-alarabis_8200-20-1002"; // كلمة مرور ثابتة
 
     // إنشاء مستخدم في auth
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
