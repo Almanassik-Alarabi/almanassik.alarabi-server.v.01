@@ -96,22 +96,20 @@ router.get('/pending', async (req, res) => {
 router.post('/add', async (req, res) => {
   const supabase = getSupabase(req);
   try {
-   // ...existing code...
-const {
-  email,
-  // password,  // احذف هذا السطر أو تجاهله
-  name,
-  wilaya,
-  license_number,
-  phone,
-  bank_account,
-  logo,         // base64 or URL
-  background,   // base64 or URL
-  location_name,
-  latitude,
-  longitude
-} = req.body;
-const password = "almanassik-alarabis_8200-20-1002"; // كلمة مرور ثابتة
+    const {
+      email,
+      password,
+      name,
+      wilaya,
+      license_number,
+      phone,
+      bank_account,
+      logo,         // base64 or URL
+      background,   // base64 or URL
+      location_name,
+      latitude,
+      longitude
+    } = req.body;
 
     // إنشاء مستخدم في auth
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
@@ -193,8 +191,28 @@ router.put('/status/:id', async (req, res) => {
   res.json({ message: is_approved ? 'تم قبول الوكالة' : 'تم تعليق الوكالة', data });
 });
 router.delete('/remove/:id', async (req, res) => {
+  // جلب جميع عروض الوكالة
+  const { data: offers, error: offersError } = await supabase.from('offers').select('id').eq('agency_id', id);
+  if (offersError) {
+    return res.status(500).json({ error: 'فشل جلب عروض الوكالة', details: offersError.message });
+  }
+
+  // حذف جميع سجلات offer_view_counts المرتبطة بعروض الوكالة
+  if (offers && offers.length > 0) {
+    const offerIds = offers.map(offer => offer.id);
+    const { error: deleteOfferViewsError } = await supabase.from('offer_view_counts').delete().in('offer_id', offerIds);
+    if (deleteOfferViewsError) {
+      return res.status(500).json({ error: 'فشل حذف إحصائيات مشاهدات العروض المرتبطة بالوكالة', details: deleteOfferViewsError.message });
+    }
+  }
   const supabase = getSupabase(req);
   const { id } = req.params;
+
+  // حذف جميع العروض المرتبطة بالوكالة في جدول offers
+  const { error: deleteOffersError } = await supabase.from('offers').delete().eq('agency_id', id);
+  if (deleteOffersError) {
+    return res.status(500).json({ error: 'فشل حذف العروض المرتبطة بالوكالة', details: deleteOffersError.message });
+  }
 
   // تحقق من الصلاحيات
   const { data: currentAdmin, error: currentAdminError } = await supabase
@@ -218,10 +236,33 @@ router.delete('/remove/:id', async (req, res) => {
     return res.status(404).json({ error: 'الوكالة غير موجودة' });
   }
 
+
   // حذف جميع الصفوف المرتبطة بالوكالة في جدول agency_airports
   const { error: deleteAirportsError } = await supabase.from('agency_airports').delete().eq('agency_id', id);
   if (deleteAirportsError) {
     return res.status(500).json({ error: 'فشل حذف المطارات المرتبطة بالوكالة', details: deleteAirportsError.message });
+  }
+
+  // جلب جميع الدردشات المرتبطة بالوكالة
+  const { data: chats, error: chatsError } = await supabase.from('chats').select('id').eq('agency_id', id);
+  if (chatsError) {
+    return res.status(500).json({ error: 'فشل جلب الدردشات المرتبطة بالوكالة', details: chatsError.message });
+  }
+
+  // حذف جميع الرسائل المرتبطة بهذه الدردشات
+  if (chats && chats.length > 0) {
+    const chatIds = chats.map(chat => chat.id);
+    const { error: deleteMessagesError } = await supabase.from('messages').delete().in('chat_id', chatIds);
+    if (deleteMessagesError) {
+      return res.status(500).json({ error: 'فشل حذف الرسائل المرتبطة بدردشات الوكالة', details: deleteMessagesError.message });
+    }
+  }
+
+  // حذف جميع الدردشات المرتبطة بالوكالة في جدول chats
+  const { error: deleteChatsError } = await supabase.from('chats').delete().eq('agency_id', id);
+  if (deleteChatsError) {
+    console.error('تفاصيل خطأ حذف الدردشات:', deleteChatsError);
+    return res.status(500).json({ error: 'فشل حذف الدردشات المرتبطة بالوكالة', details: deleteChatsError.message });
   }
 
   // حذف الوكالة
@@ -368,5 +409,3 @@ router.put('/update/:id', async (req, res) => {
 
 
 module.exports = router;
-
-
