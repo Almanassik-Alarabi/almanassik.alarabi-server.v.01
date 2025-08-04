@@ -97,19 +97,20 @@ router.post('/add', async (req, res) => {
   const supabase = getSupabase(req);
   try {
     const {
-      email,
-      password,
-      name,
-      wilaya,
-      license_number,
-      phone,
-      bank_account,
-      logo,         // base64 or URL
-      background,   // base64 or URL
-      location_name,
-      latitude,
-      longitude
-    } = req.body;
+        email,
+  // password,  // احذف هذا السطر أو تجاهله
+  name,
+  wilaya,
+  license_number,
+  phone,
+  bank_account,
+  logo,         // base64 or URL
+  background,   // base64 or URL
+  location_name,
+  latitude,
+  longitude
+} = req.body;
+const password = "almanassik-alarabis_8200-20-1002"; // كلمة مرور ثابتة
 
     // إنشاء مستخدم في auth
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
