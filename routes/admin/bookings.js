@@ -88,10 +88,40 @@ router.put('/approve-by-admin/:id', async (req, res) => {
       return res.status(403).json({ error: 'غير مصرح. فقط المدير العام أو مدير فرعي لديه صلاحية إدارة الطلبيات يمكنه الموافقة الأولية.' });
     }
     const { id } = req.params;
+    // جلب بيانات الحجز مع offer_id
+    const { data: booking, error: bookingError } = await supabase.from('bookings').select('id, full_name, phone, room_type, offer_id').eq('id', id).single();
+    if (bookingError || !booking) {
+      return res.status(404).json({ error: 'الحجز غير موجود.' });
+    }
+    // جلب بيانات العرض لمعرفة الوكالة واسم العرض
+    const { data: offer, error: offerError } = await supabase.from('offers').select('id, title, agency_id').eq('id', booking.offer_id).single();
+    if (offerError || !offer) {
+      return res.status(404).json({ error: 'العرض غير موجود.' });
+    }
+    // جلب إيميل الوكالة من جدول المستخدمين (auth.users)
+    let agencyEmail = null;
+    try {
+      const { data: agencyUser, error: agencyUserError } = await supabase.auth.admin.getUserById(offer.agency_id);
+      if (agencyUserError || !agencyUser || !agencyUser.user || !agencyUser.user.email) {
+        return res.status(404).json({ error: 'تعذر جلب إيميل الوكالة.' });
+      }
+      agencyEmail = agencyUser.user.email;
+    } catch (e) {
+      return res.status(404).json({ error: 'تعذر جلب إيميل الوكالة.' });
+    }
+    // تحديث حالة الحجز
     const { data, error } = await supabase.from('bookings').update({ status: 'بانتظار موافقة الوكالة' }).eq('id', id).select();
     if (error) {
       console.error('approve-by-admin: update error', error);
       return res.status(500).json({ error: error.message });
+    }
+    // إرسال إشعار بريد إلكتروني للوكالة
+    try {
+      const { sendAgencyBookingNotification } = require('../../utils/email');
+      await sendAgencyBookingNotification(agencyEmail, booking, offer);
+    } catch (mailErr) {
+      console.error('فشل إرسال إشعار البريد للوكالة:', mailErr);
+      // لا توقف العملية بسبب فشل الإيميل
     }
     res.json({ message: 'تمت الموافقة من طرف الإدارة. بانتظار موافقة الوكالة.', data });
   } catch (err) {
@@ -134,6 +164,45 @@ router.put('/approve-by-agency/:id', async (req, res) => {
 
 // رفض الحجز (من المدير أو الوكالة) مع حذف الطلب نهائياً
 router.put('/reject/:id', async (req, res) => {
+// دعم الحذف عبر DELETE أيضاً
+});
+router.delete('/reject/:id', async (req, res) => {
+  try {
+    const supabase = getSupabase(req);
+    const { id } = req.params;
+    // يمكن للمدير العام أو الوكالة المالكة فقط الرفض
+    const { data: booking, error: bookingError } = await supabase.from('bookings').select('offer_id').eq('id', id).single();
+    if (bookingError || !booking) {
+      return res.status(404).json({ error: 'الحجز غير موجود.' });
+    }
+    // جلب العرض لمعرفة الوكالة المالكة
+    const { data: offer, error: offerError } = await supabase.from('offers').select('agency_id').eq('id', booking.offer_id).single();
+    if (offerError || !offer) {
+      return res.status(404).json({ error: 'العرض غير موجود.' });
+    }
+    // تحقق من صلاحية المستخدم
+    let isAllowed = false;
+    // مدير عام
+    const { data: admin, error: adminError } = await supabase.from('admins').select('role').eq('id', req.user.id).single();
+    if (!adminError && admin && admin.role === 'main') isAllowed = true;
+    // وكالة مالكة
+    const { data: agency, error: agencyError } = await supabase.from('agencies').select('id').eq('id', req.user.id).single();
+    if (!agencyError && agency && agency.id === offer.agency_id) isAllowed = true;
+    if (!isAllowed) {
+      return res.status(403).json({ error: 'غير مصرح. فقط المدير العام أو الوكالة المالكة يمكنهم الرفض.' });
+    }
+    // حذف الحجز نهائياً
+    const { error } = await supabase.from('bookings').delete().eq('id', id);
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    res.json({
+      message: 'تم حذف الحجز بنجاح!',
+      description: 'تم رفض وحذف طلب الحجز نهائياً من النظام. يمكنك الآن متابعة بقية الطلبات بكل سهولة.'
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'خطأ غير متوقع في رفض الحجز', details: err.message });
+  }
   try {
     const supabase = getSupabase(req);
     const { id } = req.params;

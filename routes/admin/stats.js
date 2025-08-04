@@ -305,6 +305,8 @@ router.get('/admin-activity-monthly', async (req, res) => {
 
 // سجل نشاطات المدراء (logs)
 router.get('/admin-activity', async (req, res) => {
+  // إصلاح: تعريف supabase بشكل صحيح
+  const supabase = getSupabase(req);
   // فقط المدير العام يمكنه رؤية السجل
   const { data: currentAdmin, error: currentAdminError } = await supabase.from('admins').select('role').eq('id', req.user.id).single();
   if (currentAdminError || !currentAdmin || currentAdmin.role !== 'main') {
@@ -362,20 +364,28 @@ router.get('/top-agency-by-offers-per-year', async (req, res) => {
 router.get('/admin/active-now', async (req, res) => {
   const supabase = getSupabase(req);
   const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  // جلب المدراء النشطين الآن
+  // جلب جميع سجلات النشاط خلال آخر 5 دقائق
   const { data: online, error: onlineErr } = await supabase
     .from('admin_online_status')
-    .select('admin_id')
+    .select('admin_id, last_seen, is_active')
     .eq('is_active', true)
     .gte('last_seen', fiveMinAgo);
   if (onlineErr) return res.status(500).json({ error: onlineErr.message });
-  const adminIds = (online || []).map(a => a.admin_id);
+  // اختيار أحدث سجل فقط لكل admin_id
+  const latestByAdmin = {};
+  (online || []).forEach(row => {
+    if (!row.admin_id) return;
+    if (!latestByAdmin[row.admin_id] || new Date(row.last_seen) > new Date(latestByAdmin[row.admin_id].last_seen)) {
+      latestByAdmin[row.admin_id] = row;
+    }
+  });
+  const uniqueAdminIds = Object.keys(latestByAdmin);
   let count = 0;
-  if (adminIds.length) {
+  if (uniqueAdminIds.length) {
     const { data: adminsData } = await supabase
       .from('admins')
       .select('id, role')
-      .in('id', adminIds);
+      .in('id', uniqueAdminIds);
     count = (adminsData || []).filter(a => a.role === 'main' || a.role === 'sub').length;
   }
   res.json({ count });

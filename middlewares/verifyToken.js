@@ -10,7 +10,7 @@ module.exports = function verifyToken(req, res, next) {
     // Use your JWT secret from .env or fallback
     const secret = process.env.JWT_SECRET || 'your_jwt_secret';
     const decoded = jwt.verify(token, secret);
-    req.user = decoded;
+    req.user = { ...decoded, id: decoded.sub };
     next();
   } catch (err) {
     return res.status(403).json({ error: 'Invalid or expired token.' });

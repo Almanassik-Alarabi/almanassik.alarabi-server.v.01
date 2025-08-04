@@ -57,6 +57,35 @@ router.get('/:agencyId/active-offers', async (req, res) => {
   }
   res.json({ status: 'ok', offers: data });
 });
+// جلب معلومات وكالة محددة مع جميع عروضها
+router.get('/:agencyId/details-with-offers', async (req, res) => {
+  const { agencyId } = req.params;
+
+  // جلب بيانات الوكالة (حقول متوافقة مع قاعدة البيانات)
+  const { data: agency, error: agencyError } = await supabase
+    .from('agencies')
+    .select('id, name, wilaya, license_number, logo_url, background_url, location_name, latitude, longitude, is_approved, created_at')
+    .eq('id', agencyId)
+    .eq('is_approved', true)
+    .single();
+
+  if (agencyError || !agency) {
+    return res.status(404).json({ status: 'error', error: 'Agency not found or not approved' });
+  }
+
+  // جلب جميع العروض الخاصة بالوكالة (حقول متوافقة مع offers)
+  const { data: offers, error: offersError } = await supabase
+    .from('offers')
+    .select('id, title, departure_date, return_date, duration_days, hotel_name, hotel_distance, description, price_double, price_triple, price_quad, price_quint, main_image, is_golden, created_at')
+    .eq('agency_id', agencyId)
+    .order('departure_date', { ascending: true });
+
+  if (offersError) {
+    return res.status(500).json({ status: 'error', error: offersError.message });
+  }
+
+  res.json({ status: 'ok', agency, offers });
+});
 
 // جلب الوكالات المعتمدة التي لديها عروض فقط مع مطارات الإقلاع الخاصة بها
 router.get('/with-offers-and-airports', async (req, res) => {

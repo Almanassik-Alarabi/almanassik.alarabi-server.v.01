@@ -18,8 +18,8 @@ CREATE TABLE public.admins (
   permissions jsonb,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT admins_pkey PRIMARY KEY (id),
-  CONSTRAINT admins_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
-  CONSTRAINT admins_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.admins(id)
+  CONSTRAINT admins_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.admins(id),
+  CONSTRAINT admins_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
 CREATE TABLE public.agencies (
   id uuid NOT NULL,
@@ -42,8 +42,8 @@ CREATE TABLE public.agency_airports (
   agency_id uuid NOT NULL,
   airport_id integer NOT NULL,
   CONSTRAINT agency_airports_pkey PRIMARY KEY (agency_id, airport_id),
-  CONSTRAINT agency_airports_agency_id_fkey FOREIGN KEY (agency_id) REFERENCES public.agencies(id),
-  CONSTRAINT agency_airports_airport_id_fkey FOREIGN KEY (airport_id) REFERENCES public.airports(id)
+  CONSTRAINT agency_airports_airport_id_fkey FOREIGN KEY (airport_id) REFERENCES public.airports(id),
+  CONSTRAINT agency_airports_agency_id_fkey FOREIGN KEY (agency_id) REFERENCES public.agencies(id)
 );
 CREATE TABLE public.agency_branches (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -51,11 +51,11 @@ CREATE TABLE public.agency_branches (
   email text,
   password text,
   wilaya text,
-  departure_airport text,
   location_name text,
   latitude numeric,
   longitude numeric,
   manager_phone text,
+  name text,
   CONSTRAINT agency_branches_pkey PRIMARY KEY (id),
   CONSTRAINT agency_branches_agency_id_fkey FOREIGN KEY (agency_id) REFERENCES public.agencies(id)
 );
@@ -89,8 +89,16 @@ CREATE TABLE public.bookings (
   status text DEFAULT 'قيد الانتظار'::text CHECK (status = ANY (ARRAY['قيد الانتظار'::text, 'بانتظار موافقة الوكالة'::text, 'مقبول'::text, 'مرفوض'::text])),
   tracking_code text UNIQUE,
   created_at timestamp without time zone DEFAULT now(),
+  discount_applied boolean DEFAULT false,
   CONSTRAINT bookings_pkey PRIMARY KEY (id),
   CONSTRAINT bookings_offer_id_fkey FOREIGN KEY (offer_id) REFERENCES public.offers(id)
+);
+CREATE TABLE public.branch_offers (
+  branch_id uuid NOT NULL,
+  offer_id uuid NOT NULL,
+  CONSTRAINT branch_offers_pkey PRIMARY KEY (branch_id, offer_id),
+  CONSTRAINT branch_offers_branch_id_fkey FOREIGN KEY (branch_id) REFERENCES public.agency_branches(id),
+  CONSTRAINT branch_offers_offer_id_fkey FOREIGN KEY (offer_id) REFERENCES public.offers(id)
 );
 CREATE TABLE public.chats (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -108,9 +116,10 @@ CREATE TABLE public.messages (
   sender_type text CHECK (sender_type = ANY (ARRAY['agency'::text, 'admin'::text])),
   message text NOT NULL,
   sent_at timestamp without time zone DEFAULT now(),
+  image_url text,
   CONSTRAINT messages_pkey PRIMARY KEY (id),
-  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES auth.users(id),
-  CONSTRAINT messages_chat_id_fkey FOREIGN KEY (chat_id) REFERENCES public.chats(id)
+  CONSTRAINT messages_chat_id_fkey FOREIGN KEY (chat_id) REFERENCES public.chats(id),
+  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES auth.users(id)
 );
 CREATE TABLE public.offer_gifts (
   id integer NOT NULL DEFAULT nextval('offer_gifts_id_seq'::regclass),
@@ -138,7 +147,7 @@ CREATE TABLE public.offers (
   duration_days integer,
   hotel_name text,
   hotel_distance numeric,
-  hotel_images ARRAY,
+  hotel_images jsonb,
   description text,
   price_double numeric,
   price_triple numeric,
@@ -148,9 +157,10 @@ CREATE TABLE public.offers (
   entry text CHECK (entry = ANY (ARRAY['مكة'::text, 'المدينة'::text])),
   exit text CHECK (exit = ANY (ARRAY['مكة'::text, 'المدينة'::text])),
   is_golden boolean DEFAULT false,
+  updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT offers_pkey PRIMARY KEY (id),
-  CONSTRAINT offers_airline_id_fkey FOREIGN KEY (airline_id) REFERENCES public.airlines(id),
-  CONSTRAINT offers_agency_id_fkey FOREIGN KEY (agency_id) REFERENCES public.agencies(id)
+  CONSTRAINT offers_agency_id_fkey FOREIGN KEY (agency_id) REFERENCES public.agencies(id),
+  CONSTRAINT offers_airline_id_fkey FOREIGN KEY (airline_id) REFERENCES public.airlines(id)
 );
 CREATE TABLE public.site_stats (
   id integer NOT NULL DEFAULT nextval('site_stats_id_seq'::regclass),

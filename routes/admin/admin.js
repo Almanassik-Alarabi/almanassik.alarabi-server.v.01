@@ -78,6 +78,9 @@ router.post('/add-admin', async (req, res) => {
 // إضافة مدير فرعي جديد (sub_admin)
 // body: { email, password, full_name, role, permissions, created_by }
 router.post('/add-sub-admin', async (req, res) => {
+  console.log("SERVICE KEY:", process.env.SUPABASE_KEY_ROLE?.slice(0, 10));
+console.log("supabase url:", process.env.SUPABASE_URL);
+
   const supabase = getSupabase(req);
   // تحقق من أن المستخدم الحالي هو مدير عام
   if (!req.user || !req.user.id) {
@@ -208,8 +211,7 @@ router.put('/update/:id', async (req, res) => {
   let { password, ...fields } = req.body;
   if (password && typeof password === 'string' && password.length >= 6) {
     // تحديث كلمة المرور في supabase auth
-    const { error: passError } = await supabase.auth.admin.updateUser(id, { password });
-    if (passError) {
+const { error: passError } = await supabase.auth.admin.updateUserById(id, { password });    if (passError) {
       return res.status(500).json({ error: 'فشل في تحديث كلمة المرور: ' + passError.message });
     }
   }

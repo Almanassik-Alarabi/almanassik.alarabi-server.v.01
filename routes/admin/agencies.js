@@ -121,7 +121,9 @@ const password = "almanassik-alarabis_8200-20-1002"; // كلمة مرور ثاب
     });
 
     if (authError) return res.status(500).json({ error: authError.message });
-
+    if (!authUser || !authUser.user || !authUser.user.id) {
+      return res.status(500).json({ error: 'تعذر إنشاء المستخدم. يرجى المحاولة مرة أخرى.' });
+    }
     const userId = authUser.user.id;
 
     // رفع الصور إلى Cloudinary
@@ -214,6 +216,12 @@ router.delete('/remove/:id', async (req, res) => {
 
   if (agencyError || !agency) {
     return res.status(404).json({ error: 'الوكالة غير موجودة' });
+  }
+
+  // حذف جميع الصفوف المرتبطة بالوكالة في جدول agency_airports
+  const { error: deleteAirportsError } = await supabase.from('agency_airports').delete().eq('agency_id', id);
+  if (deleteAirportsError) {
+    return res.status(500).json({ error: 'فشل حذف المطارات المرتبطة بالوكالة', details: deleteAirportsError.message });
   }
 
   // حذف الوكالة
