@@ -226,10 +226,29 @@ router.delete('/remove/:id', async (req, res) => {
     }
   }
 
-  // حذف جميع الفروع المرتبطة بالوكالة
-  const { error: deleteBranchesError } = await supabase.from('branches').delete().eq('agency_id', id);
-  if (deleteBranchesError) {
-    return res.status(500).json({ error: 'فشل حذف الفروع المرتبطة بالوكالة', details: deleteBranchesError.message });
+  // حذف جميع علاقات الفروع المرتبطة بالوكالة
+  // جلب جميع فروع الوكالة
+  const { data: branches, error: branchesError } = await supabase.from('agency_branches').select('id').eq('agency_id', id);
+  if (branchesError) {
+    return res.status(500).json({ error: 'فشل جلب الفروع المرتبطة بالوكالة', details: branchesError.message });
+  }
+  if (branches && branches.length > 0) {
+    const branchIds = branches.map(branch => branch.id);
+    // حذف علاقات branch_offers المرتبطة بالفروع
+    const { error: deleteBranchOffersError } = await supabase.from('branch_offers').delete().in('branch_id', branchIds);
+    if (deleteBranchOffersError) {
+      return res.status(500).json({ error: 'فشل حذف علاقات عروض الفروع', details: deleteBranchOffersError.message });
+    }
+    // حذف علاقات agency_branches_airports المرتبطة بالفروع
+    const { error: deleteBranchAirportsError } = await supabase.from('agency_branches_airports').delete().in('agency_id', branchIds);
+    if (deleteBranchAirportsError) {
+      return res.status(500).json({ error: 'فشل حذف علاقات مطارات الفروع', details: deleteBranchAirportsError.message });
+    }
+    // حذف الفروع نفسها
+    const { error: deleteBranchesError } = await supabase.from('agency_branches').delete().in('id', branchIds);
+    if (deleteBranchesError) {
+      return res.status(500).json({ error: 'فشل حذف الفروع المرتبطة بالوكالة', details: deleteBranchesError.message });
+    }
   }
 
   // تحقق من الصلاحيات
