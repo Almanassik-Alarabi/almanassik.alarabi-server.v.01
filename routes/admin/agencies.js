@@ -223,11 +223,7 @@ router.delete('/remove/:id', async (req, res) => {
   if (deleteAirportsError) {
     return res.status(500).json({ error: 'فشل حذف المطارات المرتبطة بالوكالة', details: deleteAirportsError.message });
   }
-// حذف جميع الدردشات المرتبطة بالوكالة في جدول chats
-  const { error: deleteChatsError } = await supabase.from('chats').delete().eq('agency_id', id);
-  if (deleteChatsError) {
-    return res.status(500).json({ error: 'فشل حذف الدردشات المرتبطة بالوكالة', details: deleteChatsError.message });
-  }
+
   // حذف الوكالة
   const { error: deleteError } = await supabase.from('agencies').delete().eq('id', id);
   if (deleteError) {
@@ -372,4 +368,5 @@ router.put('/update/:id', async (req, res) => {
 
 
 module.exports = router;
+
 
