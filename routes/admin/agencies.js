@@ -200,9 +200,10 @@ router.delete('/remove/:id', async (req, res) => {
     return res.status(500).json({ error: 'فشل جلب عروض الوكالة', details: offersError.message });
   }
 
-  // حذف جميع الحجوزات المرتبطة بعروض الوكالة
+  // حذف جميع الحجوزات المرتبطة بعروض الوكالة أولاً
   if (offers && offers.length > 0) {
     const offerIds = offers.map(offer => offer.id);
+    // حذف الحجوزات المرتبطة بهذه العروض
     const { error: deleteBookingsError } = await supabase.from('bookings').delete().in('offer_id', offerIds);
     if (deleteBookingsError) {
       return res.status(500).json({ error: 'فشل حذف الحجوزات المرتبطة بعروض الوكالة', details: deleteBookingsError.message });
@@ -223,8 +224,6 @@ router.delete('/remove/:id', async (req, res) => {
     if (deleteOffersError) {
       return res.status(500).json({ error: 'فشل حذف العروض المرتبطة بالوكالة', details: deleteOffersError.message });
     }
-    // حذف جميع الحجوزات المرتبطة بالوكالة مباشرة (في حال وجود حجوزات بدون عروض)
-    await supabase.from('bookings').delete().eq('agency_id', id);
   }
 
   // حذف جميع الفروع المرتبطة بالوكالة
