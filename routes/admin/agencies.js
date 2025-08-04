@@ -200,9 +200,14 @@ router.delete('/remove/:id', async (req, res) => {
     return res.status(500).json({ error: 'فشل جلب عروض الوكالة', details: offersError.message });
   }
 
-  // حذف جميع سجلات offer_view_counts المرتبطة بعروض الوكالة
+  // حذف جميع الحجوزات المرتبطة بعروض الوكالة
   if (offers && offers.length > 0) {
     const offerIds = offers.map(offer => offer.id);
+    const { error: deleteBookingsError } = await supabase.from('bookings').delete().in('offer_id', offerIds);
+    if (deleteBookingsError) {
+      return res.status(500).json({ error: 'فشل حذف الحجوزات المرتبطة بعروض الوكالة', details: deleteBookingsError.message });
+    }
+    // حذف جميع سجلات offer_view_counts المرتبطة بعروض الوكالة
     const { error: deleteOfferViewsError } = await supabase.from('offer_view_counts').delete().in('offer_id', offerIds);
     if (deleteOfferViewsError) {
       return res.status(500).json({ error: 'فشل حذف إحصائيات مشاهدات العروض المرتبطة بالوكالة', details: deleteOfferViewsError.message });
@@ -212,19 +217,20 @@ router.delete('/remove/:id', async (req, res) => {
     if (deleteOffersError) {
       return res.status(500).json({ error: 'فشل حذف العروض المرتبطة بالوكالة', details: deleteOffersError.message });
     }
-  }
-  // إذا لم يكن هناك عروض، احذف مباشرة حسب agency_id
-  else {
+  } else {
+    // إذا لم يكن هناك عروض، احذف مباشرة حسب agency_id
     const { error: deleteOffersError } = await supabase.from('offers').delete().eq('agency_id', id);
     if (deleteOffersError) {
       return res.status(500).json({ error: 'فشل حذف العروض المرتبطة بالوكالة', details: deleteOffersError.message });
     }
+    // حذف جميع الحجوزات المرتبطة بالوكالة مباشرة (في حال وجود حجوزات بدون عروض)
+    await supabase.from('bookings').delete().eq('agency_id', id);
   }
 
-  // حذف جميع العروض المرتبطة بالوكالة في جدول offers
-  const { error: deleteOffersError } = await supabase.from('offers').delete().eq('agency_id', id);
-  if (deleteOffersError) {
-    return res.status(500).json({ error: 'فشل حذف العروض المرتبطة بالوكالة', details: deleteOffersError.message });
+  // حذف جميع الفروع المرتبطة بالوكالة
+  const { error: deleteBranchesError } = await supabase.from('branches').delete().eq('agency_id', id);
+  if (deleteBranchesError) {
+    return res.status(500).json({ error: 'فشل حذف الفروع المرتبطة بالوكالة', details: deleteBranchesError.message });
   }
 
   // تحقق من الصلاحيات
