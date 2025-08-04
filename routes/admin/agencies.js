@@ -191,6 +191,9 @@ router.put('/status/:id', async (req, res) => {
   res.json({ message: is_approved ? 'تم قبول الوكالة' : 'تم تعليق الوكالة', data });
 });
 router.delete('/remove/:id', async (req, res) => {
+  const supabase = getSupabase(req);
+  const { id } = req.params;
+
   // جلب جميع عروض الوكالة
   const { data: offers, error: offersError } = await supabase.from('offers').select('id').eq('agency_id', id);
   if (offersError) {
@@ -204,9 +207,19 @@ router.delete('/remove/:id', async (req, res) => {
     if (deleteOfferViewsError) {
       return res.status(500).json({ error: 'فشل حذف إحصائيات مشاهدات العروض المرتبطة بالوكالة', details: deleteOfferViewsError.message });
     }
+    // حذف جميع العروض المرتبطة بالوكالة في جدول offers
+    const { error: deleteOffersError } = await supabase.from('offers').delete().in('id', offerIds);
+    if (deleteOffersError) {
+      return res.status(500).json({ error: 'فشل حذف العروض المرتبطة بالوكالة', details: deleteOffersError.message });
+    }
   }
-  const supabase = getSupabase(req);
-  const { id } = req.params;
+  // إذا لم يكن هناك عروض، احذف مباشرة حسب agency_id
+  else {
+    const { error: deleteOffersError } = await supabase.from('offers').delete().eq('agency_id', id);
+    if (deleteOffersError) {
+      return res.status(500).json({ error: 'فشل حذف العروض المرتبطة بالوكالة', details: deleteOffersError.message });
+    }
+  }
 
   // حذف جميع العروض المرتبطة بالوكالة في جدول offers
   const { error: deleteOffersError } = await supabase.from('offers').delete().eq('agency_id', id);
