@@ -14,30 +14,24 @@ const supabase = require('../supabaseAdmin'); // تأكد من استخدام su
 async function sendAgencyBookingNotification(booking, offer) {
   // تحقق من متغيرات البيئة الخاصة بالبريد
   if (!process.env.NOTIFY_EMAIL_USER || !process.env.NOTIFY_EMAIL_PASS) {
-    console.error('تحذير: متغيرات البيئة الخاصة بالبريد الإلكتروني (NOTIFY_EMAIL_USER أو NOTIFY_EMAIL_PASS) غير معرفة أو فارغة!');
   } else {
-    console.log('✅ متغيرات البريد الإلكتروني معرفة:', process.env.NOTIFY_EMAIL_USER);
   }
 
   // جلب تفاصيل الحجز دومًا من قاعدة البيانات باستخدام booking.id فقط
   let bookingData = null;
   let offerData = null;
   try {
-    console.log('🔎 محاولة جلب بيانات الحجز من جدول bookings. booking.id:', booking.id, 'booking object:', booking);
     const { data: bookingRow, error: bookingError } = await supabase
       .from('bookings')
       .select('*')
       .eq('id', booking.id)
       .single();
     if (bookingError) {
-      console.error('❌ خطأ من supabase عند جلب بيانات الحجز:', bookingError);
     }
     if (!bookingRow) {
-      console.error('❌ لم يتم العثور على بيانات الحجز في جدول bookings للـ id:', booking.id);
       throw new Error('لم يتم العثور على بيانات الحجز');
     }
     bookingData = bookingRow;
-    console.log('✅ بيانات الحجز المسترجعة:', bookingData);
 
     // جلب بيانات العرض المرتبط بالحجز
     const { data: offerRow, error: offerError } = await supabase
@@ -46,35 +40,26 @@ async function sendAgencyBookingNotification(booking, offer) {
       .eq('id', bookingData.offer_id)
       .single();
     if (offerError) {
-      console.error('❌ خطأ من supabase عند جلب بيانات العرض:', offerError);
     }
     if (!offerRow) {
-      console.error('❌ لم يتم العثور على بيانات العرض في جدول offers للـ id:', bookingData.offer_id);
       throw new Error('لم يتم العثور على بيانات العرض');
     }
     offerData = offerRow;
-    console.log('✅ بيانات العرض المسترجعة:', offerData);
   } catch (err) {
-    console.error('فشل جلب بيانات الحجز أو العرض (catch):', err);
     throw err;
   }
 
   // جلب إيميل الوكالة من جدول auth.users باستخدام Admin API
   let agencyEmail = null;
   try {
-    console.log('🔎 محاولة جلب بريد الوكالة من auth.users. agency_id:', offer.agency_id, 'offer object:', offer);
     const { data: userData, error: userError } = await supabase.auth.admin.getUserById(offer.agency_id);
     if (userError) {
-      console.error('❌ خطأ من supabase عند جلب بريد الوكالة:', userError);
     }
     if (!userData || !userData.user || !userData.user.email) {
-      console.error('❌ لم يتم العثور على بريد الوكالة في جدول auth.users للـ id:', offer.agency_id);
       throw new Error('لم يتم العثور على بريد الوكالة');
     }
     agencyEmail = userData.user.email;
-    console.log('✅ بريد الوكالة المسترجع:', agencyEmail);
   } catch (err) {
-    console.error('فشل جلب بريد الوكالة (catch):', err);
     throw err;
   }
 
@@ -104,7 +89,6 @@ async function sendAgencyBookingNotification(booking, offer) {
     finalPrice = '';
   }
   // لوج للتأكد من القيم
-  console.log('roomType:', roomType, 'originalPrice:', originalPrice, 'finalPrice:', finalPrice, 'discount_applied:', bookingData.discount_applied, 'departure_date:', offerData.departure_date);
 
   const mailOptions = {
     from: process.env.NOTIFY_EMAIL_USER,
@@ -152,12 +136,9 @@ async function sendAgencyBookingNotification(booking, offer) {
     `
   };
   try {
-    console.log('🚀 محاولة إرسال البريد الإلكتروني للوكالة:', agencyEmail, 'تفاصيل الحجز:', bookingData);
     const info = await transporter.sendMail(mailOptions);
-    console.log('✅ تم إرسال البريد الإلكتروني بنجاح:', info);
     return info;
   } catch (err) {
-    console.error('❌ فشل إرسال البريد الإلكتروني (catch):', err);
     throw err;
   }
 }
