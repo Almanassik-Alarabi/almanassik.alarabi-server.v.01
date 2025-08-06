@@ -204,30 +204,22 @@ router.post('/bookings', upload.single('passport_image'), async (req, res) => {
       .select('id, title, agency_id, departure_date, agencies(name)')
       .eq('id', offer_id)
       .single();
-
+    console.log('offerData:', offerData);
     if (!offerError && offerData && offerData.agencies && offerData.agency_id) {
-      // جلب البريد الإلكتروني للوكالة من جدول auth.users
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('email')
-        .eq('id', offerData.agency_id)
-        .single();
-
-      if (!userError && userData && userData.email) {
-        const agencyEmail = userData.email;
-        const offerInfo = {
-          title: offerData.title,
-          agency_name: offerData.agencies.name,
-          booking_url: `${process.env.AGENCY_DASHBOARD_URL || 'https://www.Almanassik.alarabi.com/agency'}/bookings/${data[0].id}`
-        };
-        const bookingInfo = {
-          trip_date: offerData.departure_date,
-          room_type,
-          original_price: req.body.original_price || '',
-          final_price: req.body.final_price || ''
-        };
-        // إرسال البريد للوكالة
-        sendAgencyBookingNotification(agencyEmail, bookingInfo, offerInfo).catch(console.error);
+      // تمرير بيانات العرض والوكالة كاملة إلى email.js ليقوم هو بجلب البريد الإلكتروني
+      const offerInfo = {
+        ...offerData,
+        agency_name: offerData.agencies.name,
+        booking_url: `${process.env.AGENCY_DASHBOARD_URL || 'https://www.Almanassik.alarabi.com/agency'}/bookings/${data[0].id}`
+      };
+      // تمرير id الحجز فقط حتى تجلب الدالة تفاصيل الحجز من قاعدة البيانات
+      const bookingIdObj = { id: data[0].id };
+      console.log('سيتم تمرير id الحجز إلى email.js:', bookingIdObj, offerInfo);
+      try {
+        const emailResult = await sendAgencyBookingNotification(bookingIdObj, offerInfo);
+        console.log('نتيجة إرسال البريد:', emailResult);
+      } catch (emailErr) {
+        console.error('خطأ أثناء إرسال البريد للوكالة:', emailErr);
       }
     }
 
