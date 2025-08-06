@@ -108,9 +108,13 @@ router.post('/add', async (req, res) => {
       background,   // base64 or URL
       location_name,
       latitude,
-      longitude,
-      is_approved // يمكن أن تأتي من الواجهة الأمامية
+      longitude
     } = req.body;
+    // تعريف is_approved بشكل منفصل
+    let is_approved = false;
+    if (typeof req.body.is_approved !== 'undefined') {
+      is_approved = req.body.is_approved;
+    }
     const password = "almanassik-alarabis_8200-20-1002"; // كلمة مرور ثابتة
 
     // إنشاء مستخدم في auth
@@ -162,7 +166,7 @@ router.post('/add', async (req, res) => {
       location_name,
       latitude,
       longitude,
-      is_approved: typeof is_approved !== 'undefined' ? is_approved : false
+      is_approved
     }]);
 
     if (error) return res.status(500).json({ error: error.message, details: error });
