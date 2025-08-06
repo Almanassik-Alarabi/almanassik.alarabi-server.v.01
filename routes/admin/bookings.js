@@ -246,6 +246,28 @@ router.delete('/reject/:id', async (req, res) => {
   }
 });
 
+
+// جلب جميع عروض وكالة معينة عبر agencyId
+router.get('/offers/:agencyId', async (req, res) => {
+  const supabase = getSupabase(req);
+  const { agencyId } = req.params;
+  try {
+    // تحقق من وجود الوكالة أولاً (اختياري)
+    const { data: agency, error: agencyError } = await supabase.from('agencies').select('id').eq('id', agencyId).single();
+    if (agencyError || !agency) {
+      return res.status(404).json({ error: 'الوكالة غير موجودة' });
+    }
+    // جلب جميع العروض المرتبطة بالوكالة
+    const { data: offers, error: offersError } = await supabase.from('offers').select('*').eq('agency_id', agencyId);
+    if (offersError) {
+      return res.status(500).json({ error: offersError.message });
+    }
+    res.json({ offers });
+  } catch (err) {
+    res.status(500).json({ error: 'خطأ غير متوقع', details: err.message });
+  }
+});
+
 module.exports = router;
 
 
