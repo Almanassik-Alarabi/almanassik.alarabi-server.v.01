@@ -6,6 +6,7 @@ const multer = require('multer');
 const axios = require('axios');
 const FormData = require('form-data');
 const cloudinary = require('cloudinary').v2;
+const { sendAgencyBookingNotification } = require('../../utils/email');
 
 // جلب جميع العروض
 router.get('/', async (req, res) => {
@@ -196,23 +197,56 @@ router.post('/bookings', upload.single('passport_image'), async (req, res) => {
     if (error) {
       return res.status(500).json({ error: error.message });
     }
-    res.status(201).json({
-  success: true,
-  message: "تم إنشاء الحجز بنجاح",
-  booking: {
-    id: data[0].id,
-    offer_id: data[0].offer_id,
-    full_name: data[0].full_name,
-    phone: data[0].phone,
-    room_type: data[0].room_type,
-    discount_applied: data[0].discount_applied,
-    status: data[0].status,
-    passport_image_url: data[0].passport_image_url,
-    tracking_code: data[0].tracking_code,
-    created_at: data[0].created_at
-  }
-});
 
+    // جلب بيانات العرض مع الوكالة
+    const { data: offerData, error: offerError } = await supabase
+      .from('offers')
+      .select('id, title, agency_id, departure_date, agencies(name)')
+      .eq('id', offer_id)
+      .single();
+
+    if (!offerError && offerData && offerData.agencies && offerData.agency_id) {
+      // جلب البريد الإلكتروني للوكالة من جدول auth.users
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('id', offerData.agency_id)
+        .single();
+
+      if (!userError && userData && userData.email) {
+        const agencyEmail = userData.email;
+        const offerInfo = {
+          title: offerData.title,
+          agency_name: offerData.agencies.name,
+          booking_url: `${process.env.AGENCY_DASHBOARD_URL || 'https://www.Almanassik.alarabi.com/agency'}/bookings/${data[0].id}`
+        };
+        const bookingInfo = {
+          trip_date: offerData.departure_date,
+          room_type,
+          original_price: req.body.original_price || '',
+          final_price: req.body.final_price || ''
+        };
+        // إرسال البريد للوكالة
+        sendAgencyBookingNotification(agencyEmail, bookingInfo, offerInfo).catch(console.error);
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "تم إنشاء الحجز بنجاح",
+      booking: {
+        id: data[0].id,
+        offer_id: data[0].offer_id,
+        full_name: data[0].full_name,
+        phone: data[0].phone,
+        room_type: data[0].room_type,
+        discount_applied: data[0].discount_applied,
+        status: data[0].status,
+        passport_image_url: data[0].passport_image_url,
+        tracking_code: data[0].tracking_code,
+        created_at: data[0].created_at
+      }
+    });
   } catch (err) {
     return res.status(500).json({ error: 'Server error', details: err.message });
   }
