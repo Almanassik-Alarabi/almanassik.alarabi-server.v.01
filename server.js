@@ -68,6 +68,8 @@ app.use('/api/admin/agencies', (req, res, next) => { req.supabase = supabaseAdmi
 // إضافة مسارات الوكالات العامة بدون توكن (مثل login/register)
 // app.use('/api/agency', (req, res, next) => { req.supabase = supabaseClient; next(); }, viewagenciesRoutes); // مسارات الوكالات العامة بدون توكن
 app.use('/api/bookings', (req, res, next) => { req.supabase = supabaseAdmin; next(); }, bookingsRoutes); // مسارات الحجوزات
+app.use('/api/admin/bookings', (req, res, next) => { req.supabase = supabaseAdmin; next(); }, bookingsRoutes); // مسارات الحجوزات الإدارية
+
 // app.use('/api/chat', (req, res, next) => { req.supabase = supabaseAdmin; next(); }, chatRoutes);         // مسارات الدردشة
 app.use('/api/offers', (req, res, next) => { req.supabase = supabaseAdmin; next(); }, offersRoutes);     // مسارات العروض (بما فيها toggle-golden)
 app.use('/api/stats', (req, res, next) => { req.supabase = supabaseAdmin; next(); }, statsRoutes);      // مسارات الإحصائيات
