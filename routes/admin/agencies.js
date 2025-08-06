@@ -161,7 +161,7 @@ const password = "almanassik-alarabis_8200-20-1002"; // كلمة مرور ثاب
       location_name,
       latitude,
       longitude,
-      is_approved: false // افتراضي
+      is_approved
     }]);
 
     if (error) return res.status(500).json({ error: error.message, details: error });
@@ -169,7 +169,6 @@ const password = "almanassik-alarabis_8200-20-1002"; // كلمة مرور ثاب
     res.json({ message: "تمت الإضافة بنجاح", agency_id: userId });
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "خطأ غير متوقع", details: err.message });
   }
 });
@@ -299,7 +298,6 @@ router.delete('/remove/:id', async (req, res) => {
   // حذف جميع الدردشات المرتبطة بالوكالة في جدول chats
   const { error: deleteChatsError } = await supabase.from('chats').delete().eq('agency_id', id);
   if (deleteChatsError) {
-    console.error('تفاصيل خطأ حذف الدردشات:', deleteChatsError);
     return res.status(500).json({ error: 'فشل حذف الدردشات المرتبطة بالوكالة', details: deleteChatsError.message });
   }
 
@@ -391,7 +389,6 @@ router.put('/update/:id', async (req, res) => {
           await cloudinary.uploader.destroy(publicId, { invalidate: true });
         }
       } catch (e) {
-        console.error('فشل في حذف الشعار القديم:', e.message);
       }
     }
     const uploaded = await cloudinary.uploader.upload(logo, { folder: 'agencies/logos' });
@@ -409,7 +406,6 @@ router.put('/update/:id', async (req, res) => {
           await cloudinary.uploader.destroy(publicId, { invalidate: true });
         }
       } catch (e) {
-        console.error('فشل في حذف الخلفية القديمة:', e.message);
       }
     }
     const uploaded = await cloudinary.uploader.upload(background, { folder: 'agencies/backgrounds' });
