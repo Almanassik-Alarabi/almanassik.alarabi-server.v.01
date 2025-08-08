@@ -120,7 +120,7 @@ async function sendAgencyBookingNotification(booking, offer) {
             </div>
           </div>
           <div style="margin-bottom:18px;text-align:center;">
-            <a href="https://almanassik-alarabi-m5jl.vercel.app/agencie/manage_offers.html" style="display:inline-block;background:#1e7e34;color:#fff;font-size:18px;font-weight:bold;padding:12px 32px;border-radius:8px;text-decoration:none;box-shadow:0 2px 8px #0002;transition:background 0.2s;">اضغط هنا لعرض طلب الحجز</a>
+            <a href="https://almanassik-alarabi-m5jl.vercel.app/agencie/demande_umrah.html" style="display:inline-block;background:#1e7e34;color:#fff;font-size:18px;font-weight:bold;padding:12px 32px;border-radius:8px;text-decoration:none;box-shadow:0 2px 8px #0002;transition:background 0.2s;">اضغط هنا لعرض طلب الحجز</a>
           </div>
           <div style="font-size:15px;color:#888;text-align:center;margin-bottom:18px;">إذا واجهتكم أي ملاحظة أو استفسار، فريق الدعم جاهز لخدمتكم على مدار الساعة.</div>
           <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
